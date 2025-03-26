@@ -88,10 +88,16 @@ export async function scrapeWebsite(url: string): Promise<string> {
       port: 443,
       path: `/v2/general?url=${encodeURIComponent(url)}&x-api-key=${SCRAPING_ANT_API_KEY}&js_render=true`,
       headers: {
-        'Accept': 'application/json',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
     };
+
+    console.log('Making request to ScrapingAnt with URL:', url);
+    console.log('Request options:', {
+      ...options,
+      path: options.path.replace(SCRAPING_ANT_API_KEY, '[REDACTED]')
+    });
 
     const req = https.request(options, (res) => {
       const chunks: Buffer[] = [];
@@ -103,34 +109,26 @@ export async function scrapeWebsite(url: string): Promise<string> {
       res.on('end', () => {
         try {
           const body = Buffer.concat(chunks).toString();
-          console.log('Response body:', body); // Debug log
+          console.log('Response status code:', res.statusCode);
+          console.log('Response headers:', res.headers);
+          console.log('Response body length:', body.length);
+          console.log('Response body preview:', body.substring(0, 500));
           
-          const response = JSON.parse(body);
+          // Clean and extract text content directly from HTML
+          const text = cleanHtmlContent(body);
           
-          // Check for API errors
-          if (response.error) {
-            reject(new Error(`ScrapingAnt API error: ${response.error}`));
+          if (!text) {
+            console.error('No text content found after cleaning');
+            reject(new Error('No text content found after cleaning'));
             return;
           }
 
-          // Extract content from the response
-          if (response.content) {
-            // Clean and extract text content
-            const text = cleanHtmlContent(response.content);
-            
-            if (!text) {
-              reject(new Error('No text content found after cleaning'));
-              return;
-            }
-
-            resolve(text);
-          } else {
-            reject(new Error('No content found in the response'));
-          }
+          console.log('Successfully extracted and cleaned content, length:', text.length);
+          resolve(text);
         } catch (error) {
-          console.error('Error parsing response:', error);
+          console.error('Error processing response:', error);
           console.error('Raw response:', Buffer.concat(chunks).toString());
-          reject(new Error('Failed to parse response from ScrapingAnt'));
+          reject(new Error('Failed to process response from ScrapingAnt'));
         }
       });
     });
