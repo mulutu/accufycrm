@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DocumentUpload } from './document-upload';
 import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -36,6 +39,8 @@ export function ChatbotForm() {
   const [documents, setDocuments] = useState<File[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [createdChatbot, setCreatedChatbot] = useState<any>(null);
+  const [embedCode, setEmbedCode] = useState<string>('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -112,6 +117,16 @@ export function ChatbotForm() {
         throw new Error(data.error || 'Failed to create chatbot');
       }
 
+      const chatbot = await response.json();
+      setCreatedChatbot(chatbot);
+
+      // Fetch embed code
+      const embedResponse = await fetch(`/api/chatbots/${chatbot.id}/embed`);
+      if (embedResponse.ok) {
+        const { embedCode } = await embedResponse.json();
+        setEmbedCode(embedCode);
+      }
+
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
@@ -122,143 +137,182 @@ export function ChatbotForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter chatbot name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Tabs defaultValue="form" className="w-full">
+      <TabsList>
+        <TabsTrigger value="form">Create Chatbot</TabsTrigger>
+        {createdChatbot && <TabsTrigger value="embed">Embed Code</TabsTrigger>}
+      </TabsList>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter chatbot description"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <TabsContent value="form">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter chatbot name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="websiteUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Website URL (Optional)</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="https://example.com" 
-                  {...field} 
-                  type="url"
-                />
-              </FormControl>
-              <p className="text-sm text-gray-500">
-                Enter a website URL to scrape content from. The chatbot will use this content as part of its knowledge base.
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter chatbot description"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="websiteUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website URL (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="https://example.com" 
+                      {...field} 
+                      type="url"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-gray-500">
+                    Enter a website URL to scrape content from. The chatbot will use this content as part of its knowledge base.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="logo"
+                render={({ field: { onChange, value, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Logo (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-4">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, 'logo', setLogoPreview)}
+                          {...field}
+                        />
+                        {logoPreview && (
+                          <div className="relative w-32 h-32">
+                            <Image
+                              src={logoPreview}
+                              alt="Logo preview"
+                              fill
+                              className="object-contain rounded-lg"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="avatar"
+                render={({ field: { onChange, value, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>Avatar (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-4">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, 'avatar', setAvatarPreview)}
+                          {...field}
+                        />
+                        {avatarPreview && (
+                          <div className="relative w-32 h-32">
+                            <Image
+                              src={avatarPreview}
+                              alt="Avatar preview"
+                              fill
+                              className="object-contain rounded-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <FormLabel>Knowledge Base Documents</FormLabel>
+              <DocumentUpload
+                onDocumentsSelected={(files) => setDocuments(prev => [...prev, ...files])}
+                maxFiles={5}
+              />
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-500">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create Chatbot'}
+            </Button>
+          </form>
+        </Form>
+      </TabsContent>
+
+      {createdChatbot && (
+        <TabsContent value="embed">
+          <Card>
+            <CardHeader>
+              <CardTitle>Embed Your Chatbot</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500 mb-4">
+                Copy and paste this code into your website's HTML, just before the closing &lt;/body&gt; tag:
               </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="logo"
-            render={({ field: { onChange, value, ...field } }) => (
-              <FormItem>
-                <FormLabel>Logo (Optional)</FormLabel>
-                <FormControl>
-                  <div className="space-y-4">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, 'logo', setLogoPreview)}
-                      {...field}
-                    />
-                    {logoPreview && (
-                      <div className="relative w-32 h-32">
-                        <Image
-                          src={logoPreview}
-                          alt="Logo preview"
-                          fill
-                          className="object-contain rounded-lg"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="avatar"
-            render={({ field: { onChange, value, ...field } }) => (
-              <FormItem>
-                <FormLabel>Avatar (Optional)</FormLabel>
-                <FormControl>
-                  <div className="space-y-4">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, 'avatar', setAvatarPreview)}
-                      {...field}
-                    />
-                    {avatarPreview && (
-                      <div className="relative w-32 h-32">
-                        <Image
-                          src={avatarPreview}
-                          alt="Avatar preview"
-                          fill
-                          className="object-contain rounded-full"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <FormLabel>Knowledge Base Documents</FormLabel>
-          <DocumentUpload
-            onDocumentsSelected={(files) => setDocuments(prev => [...prev, ...files])}
-            maxFiles={5}
-          />
-        </div>
-
-        {error && (
-          <div className="text-sm text-red-500">
-            {error}
-          </div>
-        )}
-
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Create Chatbot'}
-        </Button>
-      </form>
-    </Form>
+              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                <pre className="text-sm">
+                  <code>{embedCode}</code>
+                </pre>
+              </ScrollArea>
+              <div className="mt-4">
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(embedCode);
+                    // You might want to add a toast notification here
+                  }}
+                >
+                  Copy Code
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      )}
+    </Tabs>
   );
 } 

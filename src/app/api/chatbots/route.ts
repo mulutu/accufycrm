@@ -2,16 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from "@/lib/prisma";
-import pdfParse from 'pdf-parse';
-import { Session } from 'next-auth';
 import { scrapeWebsite } from '@/lib/scraper';
-import { uploadToS3 } from '@/lib/s3';
+import { uploadFile } from '@/lib/storage';
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
-    if (!session?.user?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -23,22 +21,22 @@ export async function POST(req: Request) {
     const documents = formData.getAll('documents') as File[];
 
     if (!name) {
-      return new NextResponse('Name is required', { status: 400 });
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Upload images to S3 if provided
+    // Upload images if provided
     let logoUrl: string | null = null;
     let avatarUrl: string | null = null;
 
     if (logo) {
-      logoUrl = await uploadToS3(logo, 'logos');
+      logoUrl = await uploadFile(logo, 'logos');
     }
 
     if (avatar) {
-      avatarUrl = await uploadToS3(avatar, 'avatars');
+      avatarUrl = await uploadFile(avatar, 'avatars');
     }
 
-    // Create the chatbot
+    // Create chatbot with image URLs
     const chatbot = await prisma.chatbot.create({
       data: {
         name,
@@ -49,64 +47,58 @@ export async function POST(req: Request) {
       },
     });
 
-    // Process and store documents
-    for (const file of documents) {
+    // Handle website scraping if URL is provided
+    if (websiteUrl) {
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        // Extract text from PDF using pdf-parse
-        const data = await pdfParse(buffer);
-        const text = data.text;
-
-        // Store the document in the database
-        await prisma.document.create({
-          data: {
-            name: file.name,
-            content: text,
-            chatbotId: chatbot.id,
-            userId: session.user.id,
-          },
-        });
+        const scrapedContent = await scrapeWebsite(websiteUrl);
+        if (scrapedContent) {
+          await prisma.knowledgeBase.create({
+            data: {
+              content: scrapedContent,
+              source: 'website',
+              sourceUrl: websiteUrl,
+              chatbotId: chatbot.id,
+            },
+          });
+        }
       } catch (error) {
-        console.error('Error processing document:', error);
-        // Continue with other documents even if one fails
-        continue;
+        console.error('Error scraping website:', error);
+        // Continue without website content if scraping fails
       }
     }
 
-    // Process website content if URL is provided
-    if (websiteUrl) {
-      try {
-        const websiteContent = await scrapeWebsite(websiteUrl);
-        
-        // Store the website content in the database
-        await prisma.document.create({
+    // Handle document uploads
+    if (documents.length > 0) {
+      const documentPromises = documents.map(async (file) => {
+        const fileUrl = await uploadFile(file, 'documents');
+        return prisma.knowledgeBase.create({
           data: {
-            name: `Website: ${websiteUrl}`,
-            content: websiteContent,
+            content: file.name, // You might want to extract text content from the file
+            source: 'document',
+            sourceUrl: fileUrl,
             chatbotId: chatbot.id,
-            userId: session.user.id,
           },
         });
-      } catch (error) {
-        console.error('Error processing website:', error);
-        // Continue even if website scraping fails
-      }
+      });
+
+      await Promise.all(documentPromises);
     }
 
     return NextResponse.json(chatbot);
   } catch (error) {
     console.error('Error creating chatbot:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create chatbot' },
+      { status: 500 }
+    );
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
-    if (!session?.user?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const chatbots = await prisma.chatbot.findMany({
@@ -114,7 +106,7 @@ export async function GET() {
         userId: session.user.id,
       },
       include: {
-        documents: true,
+        knowledgeBase: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -124,6 +116,9 @@ export async function GET() {
     return NextResponse.json(chatbots);
   } catch (error) {
     console.error('Error fetching chatbots:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch chatbots' },
+      { status: 500 }
+    );
   }
 } 
