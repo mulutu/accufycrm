@@ -45,7 +45,15 @@ if (STORAGE_TYPE === StorageType.S3) {
   });
 }
 
-export async function uploadFile(file: File, folder: string): Promise<string> {
+// Type for file data that can come from both browser and Node.js
+type FileData = {
+  name: string;
+  type: string;
+  size: number;
+  arrayBuffer: () => Promise<ArrayBuffer>;
+};
+
+export async function uploadFile(file: FileData, folder: string): Promise<string> {
   try {
     const buffer = await file.arrayBuffer();
     const fileName = `${Date.now()}-${file.name}`;
@@ -60,9 +68,9 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
       const filePath = path.join(uploadPath, fileName);
       await writeFile(filePath, Buffer.from(buffer));
 
-      // Return public URL
-      return `/uploads/${folder}/${fileName}`;
-    } else {
+      // Return the public URL
+      return `/uploads/${key}`;
+    } else if (STORAGE_TYPE === StorageType.S3 && s3Client) {
       // Upload to S3
       const command = new PutObjectCommand({
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -71,11 +79,13 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
         ContentType: file.type,
       });
 
-      await s3Client!.send(command);
+      await s3Client.send(command);
 
-      // Generate a signed URL that expires in 1 year
-      const signedUrl = await getSignedUrl(s3Client!, command, { expiresIn: 31536000 });
+      // Generate a signed URL that expires in 1 hour
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
       return signedUrl;
+    } else {
+      throw new Error('Invalid storage configuration');
     }
   } catch (error) {
     console.error('Error uploading file:', error);
@@ -84,9 +94,8 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
 }
 
 export function getFileUrl(path: string): string {
-  if (STORAGE_TYPE === StorageType.LOCAL) {
-    return path; // Local paths are already relative to public directory
-  } else {
-    return path; // S3 URLs are already complete
+  if (path.startsWith('http')) {
+    return path;
   }
+  return `${process.env.NEXTAUTH_URL}${path}`;
 } 

@@ -16,7 +16,7 @@ export async function scrapeWebsite(url: string): Promise<string> {
     const options: https.RequestOptions = {
       method: 'GET',
       hostname: SCRAPING_ANT_HOST,
-      port: null,
+      port: 443,
       path: `/v2/general?url=${encodeURIComponent(url)}&x-api-key=${SCRAPING_ANT_API_KEY}`,
       headers: {
         'Accept': 'application/json'
@@ -32,9 +32,15 @@ export async function scrapeWebsite(url: string): Promise<string> {
 
       res.on('end', () => {
         try {
-          const body = Buffer.concat(chunks);
-          const response = JSON.parse(body.toString());
+          const body = Buffer.concat(chunks).toString();
+          const response = JSON.parse(body);
           
+          // Check for API errors
+          if (response.error) {
+            reject(new Error(`ScrapingAnt API error: ${response.error}`));
+            return;
+          }
+
           // Extract text content from the response
           if (response.content) {
             // Remove HTML tags and clean up the text
@@ -44,18 +50,31 @@ export async function scrapeWebsite(url: string): Promise<string> {
               .replace(/\n+/g, '\n') // Replace multiple newlines with single newline
               .trim();
             
+            if (!text) {
+              reject(new Error('No text content found after cleaning'));
+              return;
+            }
+
             resolve(text);
           } else {
             reject(new Error('No content found in the response'));
           }
-        } catch {
-          reject(new Error('Failed to parse response'));
+        } catch (error) {
+          console.error('Error parsing response:', error);
+          reject(new Error('Failed to parse response from ScrapingAnt'));
         }
       });
     });
 
-    req.on('error', () => {
-      reject(new Error('Failed to scrape website content'));
+    req.on('error', (error) => {
+      console.error('Request error:', error);
+      reject(new Error('Failed to connect to ScrapingAnt'));
+    });
+
+    // Set a timeout
+    req.setTimeout(30000, () => {
+      req.destroy();
+      reject(new Error('Request timed out'));
     });
 
     req.end();

@@ -4,10 +4,15 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from "@/lib/prisma";
 import { scrapeWebsite } from '@/lib/scraper';
 import { uploadFile } from '@/lib/storage';
+import { Session } from 'next-auth';
+
+interface BlobWithName extends Blob {
+  name?: string;
+}
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -16,9 +21,9 @@ export async function POST(req: Request) {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const websiteUrl = formData.get('websiteUrl') as string;
-    const logo = formData.get('logo') as File | null;
-    const avatar = formData.get('avatar') as File | null;
-    const documents = formData.getAll('documents') as File[];
+    const logo = formData.get('logo');
+    const avatar = formData.get('avatar');
+    const documents = formData.getAll('documents');
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -28,12 +33,24 @@ export async function POST(req: Request) {
     let logoUrl: string | null = null;
     let avatarUrl: string | null = null;
 
-    if (logo) {
-      logoUrl = await uploadFile(logo, 'logos');
+    if (logo instanceof Blob) {
+      const fileData = {
+        name: (logo as BlobWithName).name || 'logo',
+        type: logo.type,
+        size: logo.size,
+        arrayBuffer: () => logo.arrayBuffer(),
+      };
+      logoUrl = await uploadFile(fileData, 'logos');
     }
 
-    if (avatar) {
-      avatarUrl = await uploadFile(avatar, 'avatars');
+    if (avatar instanceof Blob) {
+      const fileData = {
+        name: (avatar as BlobWithName).name || 'avatar',
+        type: avatar.type,
+        size: avatar.size,
+        arrayBuffer: () => avatar.arrayBuffer(),
+      };
+      avatarUrl = await uploadFile(fileData, 'avatars');
     }
 
     // Create chatbot with image URLs
@@ -63,32 +80,38 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.error('Error scraping website:', error);
-        // Continue without website content if scraping fails
+        // Continue without website content
       }
     }
 
     // Handle document uploads
-    if (documents.length > 0) {
-      const documentPromises = documents.map(async (file) => {
-        const fileUrl = await uploadFile(file, 'documents');
-        return prisma.knowledgeBase.create({
+    for (const doc of documents) {
+      if (doc instanceof Blob) {
+        const fileData = {
+          name: (doc as BlobWithName).name || 'document',
+          type: doc.type,
+          size: doc.size,
+          arrayBuffer: () => doc.arrayBuffer(),
+        };
+        const fileUrl = await uploadFile(fileData, 'documents');
+        
+        // Create knowledge base entry for the document
+        await prisma.knowledgeBase.create({
           data: {
-            content: file.name, // You might want to extract text content from the file
+            content: '', // You might want to extract text from the document here
             source: 'document',
             sourceUrl: fileUrl,
             chatbotId: chatbot.id,
           },
         });
-      });
-
-      await Promise.all(documentPromises);
+      }
     }
 
     return NextResponse.json(chatbot);
   } catch (error) {
     console.error('Error creating chatbot:', error);
     return NextResponse.json(
-      { error: 'Failed to create chatbot' },
+      { error: error instanceof Error ? error.message : 'Failed to create chatbot' },
       { status: 500 }
     );
   }
