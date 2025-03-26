@@ -64,6 +64,30 @@ function cleanHtmlContent(html: string): string {
   // Remove remaining HTML tags
   html = html.replace(/<[^>]*>/g, '');
   
+  // Remove JavaScript-like content
+  html = html.replace(/translateY:\s*\[[^\]]+\]/g, '');
+  html = html.replace(/opacity:\s*\[[^\]]+\]/g, '');
+  html = html.replace(/easing:\s*[^;]+/g, '');
+  html = html.replace(/duration:\s*\d+/g, '');
+  html = html.replace(/delay:\s*[^;]+/g, '');
+  html = html.replace(/anime\.stagger\([^)]+\)/g, '');
+  html = html.replace(/\[[^\]]+\]/g, '');
+  html = html.replace(/\{[^}]+\}/g, '');
+  
+  // Remove CSS-like content
+  html = html.replace(/[a-zA-Z-]+:\s*[^;]+;/g, '');
+  html = html.replace(/@[a-zA-Z-]+\s*\{[^}]+\}/g, '');
+  html = html.replace(/\.([a-zA-Z0-9_-]+)\s*\{[^}]+\}/g, '');
+  html = html.replace(/#([a-zA-Z0-9_-]+)\s*\{[^}]+\}/g, '');
+  
+  // Remove inline styles
+  html = html.replace(/style="[^"]*"/g, '');
+  html = html.replace(/style='[^']*'/g, '');
+  
+  // Remove data attributes
+  html = html.replace(/data-[a-zA-Z-]+="[^"]*"/g, '');
+  html = html.replace(/data-[a-zA-Z-]+='[^']*'/g, '');
+  
   // Decode HTML entities
   html = html.replace(/&nbsp;/g, ' ');
   html = html.replace(/&amp;/g, '&');
@@ -76,6 +100,7 @@ function cleanHtmlContent(html: string): string {
   html = html.replace(/\s+/g, ' '); // Replace multiple spaces with single space
   html = html.replace(/\n+/g, '\n'); // Replace multiple newlines with single newline
   html = html.replace(/\t+/g, ' '); // Replace tabs with space
+  html = html.replace(/[^\S\r\n]+/g, ' '); // Replace any whitespace with single space
   html = html.trim();
   
   return html;
