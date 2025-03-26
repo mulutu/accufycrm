@@ -73,6 +73,7 @@ model Chatbot {
   description   String?
   logoUrl       String?
   avatarUrl     String?
+  websiteUrl    String?
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages      Message[]

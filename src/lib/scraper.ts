@@ -1,4 +1,5 @@
 import https from 'https';
+import { prisma } from '@/lib/prisma';
 
 if (!process.env.SCRAPING_ANT_API_KEY) {
   throw new Error('SCRAPING_ANT_API_KEY is not defined in environment variables');
@@ -80,7 +81,7 @@ function cleanHtmlContent(html: string): string {
   return html;
 }
 
-export async function scrapeWebsite(url: string): Promise<string> {
+export async function scrapeWebsite(url: string, chatbotId: string, userId: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const options: https.RequestOptions = {
       method: 'GET',
@@ -100,15 +101,15 @@ export async function scrapeWebsite(url: string): Promise<string> {
     });
 
     const req = https.request(options, (res) => {
-      const chunks: Buffer[] = [];
+      const responseChunks: Buffer[] = [];
 
       res.on('data', (chunk) => {
-        chunks.push(chunk);
+        responseChunks.push(chunk);
       });
 
-      res.on('end', () => {
+      res.on('end', async () => {
         try {
-          const body = Buffer.concat(chunks).toString();
+          const body = Buffer.concat(responseChunks).toString();
           console.log('Response status code:', res.statusCode);
           console.log('Response headers:', res.headers);
           console.log('Response body length:', body.length);
@@ -124,10 +125,30 @@ export async function scrapeWebsite(url: string): Promise<string> {
           }
 
           console.log('Successfully extracted and cleaned content, length:', text.length);
-          resolve(text);
+          
+          // Split content into chunks of 1000 characters
+          const chunkSize = 1000;
+          const textChunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g')) || [];
+          
+          // Create documents for each chunk
+          await Promise.all(
+            textChunks.map((chunk, index) => 
+              prisma.document.create({
+                data: {
+                  name: `${url} - Part ${index + 1}`,
+                  content: chunk,
+                  chatbotId,
+                  userId,
+                },
+              })
+            )
+          );
+          
+          console.log('Successfully stored scraped content in database');
+          resolve();
         } catch (error) {
           console.error('Error processing response:', error);
-          console.error('Raw response:', Buffer.concat(chunks).toString());
+          console.error('Raw response:', Buffer.concat(responseChunks).toString());
           reject(new Error('Failed to process response from ScrapingAnt'));
         }
       });

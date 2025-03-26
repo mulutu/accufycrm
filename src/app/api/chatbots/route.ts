@@ -10,14 +10,20 @@ interface BlobWithName extends Blob {
   name?: string;
 }
 
-export async function POST(req: Request) {
+interface SessionWithUser extends Session {
+  user: {
+    id: string;
+  };
+}
+
+export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
-    if (!session?.user?.email) {
+    const session = await getServerSession(authOptions) as SessionWithUser;
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await req.formData();
+    const formData = await request.formData();
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const websiteUrl = formData.get('websiteUrl') as string;
@@ -53,7 +59,7 @@ export async function POST(req: Request) {
       avatarUrl = await uploadFile(fileData, 'avatars');
     }
 
-    // Create chatbot with image URLs
+    // Create the chatbot
     const chatbot = await prisma.chatbot.create({
       data: {
         name,
@@ -67,43 +73,48 @@ export async function POST(req: Request) {
     // Handle website scraping if URL is provided
     if (websiteUrl) {
       try {
-        const scrapedContent = await scrapeWebsite(websiteUrl);
-        if (scrapedContent) {
-          await prisma.knowledgeBase.create({
-            data: {
-              content: scrapedContent,
-              source: 'website',
-              sourceUrl: websiteUrl,
-              chatbotId: chatbot.id,
-            },
-          });
-        }
+        // Create a data source for the website
+        await prisma.dataSource.create({
+          data: {
+            type: 'website',
+            url: websiteUrl,
+            chatbotId: chatbot.id,
+          },
+        });
+
+        // Scrape the website and create documents
+        await scrapeWebsite(websiteUrl, chatbot.id, session.user.id);
       } catch (error) {
         console.error('Error scraping website:', error);
-        // Continue without website content
+        // Continue with document uploads even if scraping fails
       }
     }
 
     // Handle document uploads
     for (const doc of documents) {
       if (doc instanceof Blob) {
-        const fileData = {
-          name: (doc as BlobWithName).name || 'document',
-          type: doc.type,
-          size: doc.size,
-          arrayBuffer: () => doc.arrayBuffer(),
-        };
-        const fileUrl = await uploadFile(fileData, 'documents');
-        
-        // Create knowledge base entry for the document
-        await prisma.knowledgeBase.create({
-          data: {
-            content: '', // You might want to extract text from the document here
-            source: 'document',
-            sourceUrl: fileUrl,
-            chatbotId: chatbot.id,
-          },
-        });
+        try {
+          const fileData = {
+            name: (doc as BlobWithName).name || 'document',
+            type: doc.type,
+            size: doc.size,
+            arrayBuffer: () => doc.arrayBuffer(),
+          };
+          const content = await uploadFile(fileData, 'documents');
+          
+          // Create document record
+          await prisma.document.create({
+            data: {
+              name: (doc as BlobWithName).name || 'document',
+              content,
+              chatbotId: chatbot.id,
+              userId: session.user.id,
+            },
+          });
+        } catch (error) {
+          console.error('Error uploading document:', error);
+          // Continue with other documents even if one fails
+        }
       }
     }
 
@@ -111,7 +122,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Error creating chatbot:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create chatbot' },
+      { error: 'Failed to create chatbot' },
       { status: 500 }
     );
   }
