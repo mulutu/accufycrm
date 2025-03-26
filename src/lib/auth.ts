@@ -1,17 +1,18 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { db } from "@/lib/db";
 import GoogleProvider from "next-auth/providers/google";
-import prisma from "@/lib/prisma";
-import { compare } from "bcrypt";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(db),
   session: {
     strategy: "jwt",
   },
   pages: {
     signIn: "/login",
+    newUser: "/register",
   },
   providers: [
     GoogleProvider({
@@ -19,31 +20,28 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        name: { label: "Name", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: {
             email: credentials.email,
           },
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           return null;
         }
 
-        if (!user.password) {
-          return null;
-        }
-
-        const isPasswordValid = await compare(
+        const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
         );
@@ -56,7 +54,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image,
         };
       },
     }),
@@ -64,16 +61,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ token, session }) {
       if (token) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
         session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
       }
-
       return session;
     },
     async jwt({ token, user }) {
-      const dbUser = await prisma.user.findFirst({
+      const dbUser = await db.user.findFirst({
         where: {
           email: token.email,
         },
@@ -81,7 +75,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) {
         if (user) {
-          token.id = user.id;
+          token.id = user?.id;
         }
         return token;
       }
@@ -90,7 +84,6 @@ export const authOptions: NextAuthOptions = {
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
-        picture: dbUser.image,
       };
     },
   },
