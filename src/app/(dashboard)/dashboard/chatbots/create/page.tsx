@@ -81,8 +81,10 @@ export default function CreateChatbotPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Create New Chatbot</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Create New Chatbot</h1>
+      </div>
       
       <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>

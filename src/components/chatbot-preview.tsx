@@ -15,10 +15,10 @@ interface Message {
 interface ChatbotPreviewProps {
   name: string;
   description: string;
-  logoUrl?: string;
-  avatarUrl?: string;
-  primaryColor?: string;
-  isDarkMode?: boolean;
+  logoUrl: string;
+  avatarUrl: string;
+  primaryColor: string;
+  isDarkMode: boolean;
 }
 
 export function ChatbotPreview({
@@ -26,158 +26,136 @@ export function ChatbotPreview({
   description,
   logoUrl,
   avatarUrl,
-  primaryColor = '#2563eb',
-  isDarkMode = false,
+  primaryColor,
+  isDarkMode,
 }: ChatbotPreviewProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Array<{ type: 'user' | 'bot'; content: string }>>([
+    {
+      type: 'bot',
+      content: 'Hello! How can I help you today?',
+    },
+  ]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
 
-    const userMessage: Message = {
-      role: 'user',
-      content: input.trim(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    setMessages((prev) => [...prev, { type: 'user', content: message }]);
+    setMessage('');
 
     // Simulate bot response
     setTimeout(() => {
-      const botMessage: Message = {
-        role: 'assistant',
-        content: 'This is a preview of how the chatbot will respond. The actual responses will be based on your website content and knowledge base.',
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      setIsLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: 'bot',
+          content: 'This is a preview message. The actual chatbot will respond based on your training data.',
+        },
+      ]);
     }, 1000);
   };
 
   return (
-    <div className="w-full max-w-md mx-auto border rounded-lg overflow-hidden">
-      {/* Chatbot Header */}
-      <div
-        className="p-4 border-b flex items-center gap-3"
-        style={{ backgroundColor: isDarkMode ? '#1f2937' : '#ffffff' }}
-      >
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt={name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Bot className="w-4 h-4 text-white" />
-          </div>
-        )}
-        <div>
-          <h3 className="font-semibold" style={{ color: isDarkMode ? '#ffffff' : '#111827' }}>
-            {name}
-          </h3>
-          <p className="text-sm text-gray-500">{description}</p>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <ScrollArea className="h-[400px] p-4">
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex gap-3',
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              )}
-            >
-              {message.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full flex-shrink-0">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Bot"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
-              )}
-              <div
-                className={cn(
-                  'max-w-[80%] rounded-lg p-3',
-                  message.role === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : isDarkMode
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                )}
-              >
-                {message.content}
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full flex-shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-              </div>
-              <div className="bg-gray-100 rounded-lg p-3">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
-                </div>
-              </div>
+    <div
+      className={`fixed bottom-4 right-4 w-96 rounded-lg shadow-lg ${
+        isDarkMode ? 'bg-gray-800' : 'bg-white'
+      }`}
+      style={{ borderColor: primaryColor }}
+    >
+      {!isOpen ? (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full p-4 flex items-center space-x-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          style={{ backgroundColor: primaryColor, color: 'white' }}
+        >
+          {logoUrl ? (
+            <img src={logoUrl} alt={name} className="w-8 h-8" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+              <span className="text-lg font-bold" style={{ color: primaryColor }}>
+                {name.charAt(0)}
+              </span>
             </div>
           )}
-        </div>
-      </ScrollArea>
-
-      {/* Input Area */}
-      <div
-        className="p-4 border-t"
-        style={{ backgroundColor: isDarkMode ? '#1f2937' : '#ffffff' }}
-      >
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type your message..."
-            className="flex-1"
-            style={{
-              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
-              color: isDarkMode ? '#ffffff' : '#111827',
-              borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
-            }}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            className="flex-shrink-0"
-            style={{ backgroundColor: primaryColor }}
+          <div className="text-left">
+            <h3 className="font-semibold">{name}</h3>
+            <p className="text-sm opacity-90">{description}</p>
+          </div>
+        </button>
+      ) : (
+        <div className="flex flex-col h-[600px]">
+          <div
+            className="p-4 flex items-center justify-between border-b"
+            style={{ borderColor: primaryColor }}
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            <div className="flex items-center space-x-3">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="w-8 h-8 rounded-full" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-lg font-bold" style={{ color: primaryColor }}>
+                    {name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold">{name}</h3>
+                <p className="text-sm text-gray-500">{description}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              ✕
+            </button>
+          </div>
+
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    msg.type === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.type === 'user'
+                        ? 'rounded-br-none'
+                        : 'rounded-bl-none bg-gray-100 dark:bg-gray-700'
+                    }`}
+                    style={
+                      msg.type === 'user'
+                        ? { backgroundColor: primaryColor, color: 'white' }
+                        : undefined
+                    }
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <form onSubmit={handleSendMessage} className="p-4 border-t">
+            <div className="flex space-x-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1"
+              />
+              <Button type="submit" style={{ backgroundColor: primaryColor }}>
+                Send
+              </Button>
+            </div>
+          </form>
         </div>
-      </div>
+      )}
     </div>
   );
 } 

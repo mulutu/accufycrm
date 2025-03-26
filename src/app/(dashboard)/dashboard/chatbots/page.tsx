@@ -1,5 +1,3 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
@@ -11,8 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function ChatbotsPage() {
-  const session = await getServerSession(authOptions);
-
   // This would come from a database query in production
   const chatbots = [
     {
@@ -48,7 +44,7 @@ export default async function ChatbotsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Your Chatbots</h1>
-        <Link href="/dashboard/chatbots/new">
+        <Link href="/dashboard/chatbots/create">
           <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Create New Chatbot
