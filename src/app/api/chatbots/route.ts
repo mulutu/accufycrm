@@ -1,86 +1,90 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { z } from "zod";
-
-// Schema for creating a chatbot
-const createChatbotSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  primaryColor: z.string().optional(),
-  textColor: z.string().optional(),
-  fontFamily: z.string().optional(),
-  logoUrl: z.string().optional(),
-  welcomeMessage: z.string().optional(),
-});
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { prisma } from "@/lib/prisma";
+import pdfParse from 'pdf-parse';
+import { Session } from 'next-auth';
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
+    if (!session?.user?.id) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const body = await req.json();
-    const validatedData = createChatbotSchema.parse(body);
+    const formData = await req.formData();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const documents = formData.getAll('documents') as File[];
 
+    if (!name) {
+      return new NextResponse('Name is required', { status: 400 });
+    }
+
+    // Create the chatbot
     const chatbot = await prisma.chatbot.create({
       data: {
-        ...validatedData,
+        name,
+        description,
         userId: session.user.id,
       },
     });
 
-    return NextResponse.json(chatbot, { status: 201 });
-  } catch (error) {
-    console.error("Error creating chatbot:", error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Invalid input data", errors: error.errors },
-        { status: 400 }
-      );
+    // Process and store documents
+    for (const file of documents) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        // Extract text from PDF using pdf-parse
+        const data = await pdfParse(buffer);
+        const text = data.text;
+
+        // Store the document in the database
+        await prisma.document.create({
+          data: {
+            name: file.name,
+            content: text,
+            chatbotId: chatbot.id,
+            userId: session.user.id,
+          },
+        });
+      } catch (error) {
+        console.error('Error processing document:', error);
+        // Continue with other documents even if one fails
+        continue;
+      }
     }
-    
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+
+    return NextResponse.json(chatbot);
+  } catch (error) {
+    console.error('Error creating chatbot:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions) as Session & { user: { id: string } };
+    if (!session?.user?.id) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const chatbots = await prisma.chatbot.findMany({
       where: {
         userId: session.user.id,
       },
+      include: {
+        documents: true,
+      },
       orderBy: {
-        updatedAt: 'desc',
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(chatbots);
   } catch (error) {
-    console.error("Error fetching chatbots:", error);
-    
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    console.error('Error fetching chatbots:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

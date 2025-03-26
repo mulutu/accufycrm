@@ -27,6 +27,7 @@ model User {
   sessions      Session[]
   chatbots      Chatbot[]
   messages      Message[]
+  documents     Document[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -77,6 +78,7 @@ model Chatbot {
   conversations Conversation[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  documents     Document[]
 }
 
 model DataSource {
@@ -126,6 +128,18 @@ model SystemConfig {
   value       String   @db.Text
   description String?
   type        String   // api_key, url, text, etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  content     String   @db.Text
+  chatbotId   String
+  chatbot     Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

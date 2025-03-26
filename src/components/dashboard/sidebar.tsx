@@ -34,15 +34,17 @@ export function Sidebar() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    console.log('Logout initiated');
     try {
       await signOut({
         redirect: true,
         callbackUrl: '/login',
       });
+      console.log('SignOut completed successfully');
     } catch (error) {
       console.error('Logout error:', error);
-      // Fallback navigation if signOut fails
-      router.push('/login');
+      // Force navigation to login page if signOut fails
+      window.location.href = '/login';
     }
   };
 
