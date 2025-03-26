@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from "@/lib/prisma";
 import pdfParse from 'pdf-parse';
 import { Session } from 'next-auth';
+import { scrapeWebsite } from '@/lib/scraper';
 
 export async function POST(req: Request) {
   try {
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const documents = formData.getAll('documents') as File[];
+    const websiteUrl = formData.get('websiteUrl') as string;
 
     if (!name) {
       return new NextResponse('Name is required', { status: 400 });
@@ -53,6 +55,26 @@ export async function POST(req: Request) {
         console.error('Error processing document:', error);
         // Continue with other documents even if one fails
         continue;
+      }
+    }
+
+    // Process website content if URL is provided
+    if (websiteUrl) {
+      try {
+        const websiteContent = await scrapeWebsite(websiteUrl);
+        
+        // Store the website content in the database
+        await prisma.document.create({
+          data: {
+            name: `Website: ${websiteUrl}`,
+            content: websiteContent,
+            chatbotId: chatbot.id,
+            userId: session.user.id,
+          },
+        });
+      } catch (error) {
+        console.error('Error processing website:', error);
+        // Continue even if website scraping fails
       }
     }
 

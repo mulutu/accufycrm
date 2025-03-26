@@ -21,6 +21,7 @@ import { DocumentUpload } from './document-upload';
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  websiteUrl: z.string().url('Please enter a valid URL').optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,6 +37,7 @@ export function ChatbotForm() {
     defaultValues: {
       name: '',
       description: '',
+      websiteUrl: '',
     },
   });
 
@@ -48,6 +50,11 @@ export function ChatbotForm() {
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('description', values.description || '');
+      
+      // Add website URL if provided
+      if (values.websiteUrl) {
+        formData.append('websiteUrl', values.websiteUrl);
+      }
       
       // Append each document
       documents.forEach((file) => {
@@ -103,6 +110,27 @@ export function ChatbotForm() {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="websiteUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Website URL (Optional)</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="https://example.com" 
+                  {...field} 
+                  type="url"
+                />
+              </FormControl>
+              <p className="text-sm text-gray-500">
+                Enter a website URL to scrape content from. The chatbot will use this content as part of its knowledge base.
+              </p>
               <FormMessage />
             </FormItem>
           )}
