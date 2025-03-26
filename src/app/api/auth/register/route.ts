@@ -1,66 +1,51 @@
 import { NextResponse } from "next/server";
-import { hash } from "bcrypt";
-import prisma from "@/lib/prisma";
-import { z } from "zod";
-
-const userSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+import bcrypt from "bcryptjs";
+import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password } = userSchema.parse(body);
+    const { email, name, password, phone, company, role } = body;
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    if (!email || !name || !password) {
+      return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    const existingUser = await db.user.findUnique({
+      where: {
+        email,
+      },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { message: "User with this email already exists" },
-        { status: 409 }
-      );
+      return new NextResponse("Email already exists", { status: 400 });
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
-        name,
         email,
+        name,
         password: hashedPassword,
+        phone,
+        company,
+        role,
       },
     });
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-
-    return NextResponse.json(
-      {
-        user: userWithoutPassword,
-        message: "User registered successfully",
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        company: user.company,
+        role: user.role,
       },
-      { status: 201 }
-    );
+    });
   } catch (error) {
-    console.error("Registration error:", error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Invalid input data", errors: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    console.error("[REGISTRATION_ERROR]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 } 

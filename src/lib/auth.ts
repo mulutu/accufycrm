@@ -1,5 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 import { db } from "@/lib/db";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -54,37 +56,60 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          phone: user.phone,
+          company: user.company,
+          role: user.role,
         };
       },
     }),
   ],
   callbacks: {
-    async session({ token, session }) {
+    async signIn({ user, account }: { user: any; account: any }) {
+      if (account?.provider === "google") {
+        try {
+          const existingUser = await db.user.findUnique({
+            where: {
+              email: user.email!,
+            },
+          });
+
+          if (!existingUser) {
+            // Create new user with Google profile data
+            await db.user.create({
+              data: {
+                email: user.email!,
+                name: user.name!,
+                image: user.image,
+                emailVerified: new Date(),
+                // You can add additional fields here if needed
+              },
+            });
+          }
+        } catch (error) {
+          console.error("Error during Google sign in:", error);
+          return false;
+        }
+      }
+      return true;
+    },
+    async session({ token, session }: { token: JWT; session: Session }) {
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
+        session.user.phone = token.phone;
+        session.user.company = token.company;
+        session.user.role = token.role;
       }
       return session;
     },
-    async jwt({ token, user }) {
-      const dbUser = await db.user.findFirst({
-        where: {
-          email: token.email,
-        },
-      });
-
-      if (!dbUser) {
-        if (user) {
-          token.id = user?.id;
-        }
-        return token;
+    async jwt({ token, user }: { token: JWT; user: any }) {
+      if (user) {
+        token.id = user.id;
+        token.phone = user.phone;
+        token.company = user.company;
+        token.role = user.role;
       }
-
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-      };
+      return token;
     },
   },
 }; 

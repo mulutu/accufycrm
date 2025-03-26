@@ -20,6 +20,9 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  phone         String?
+  company       String?
+  role          String?
   accounts      Account[]
   sessions      Session[]
   chatbots      Chatbot[]

@@ -21,6 +21,9 @@ export function RegisterForm() {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const phone = formData.get('phone') as string;
+    const company = formData.get('company') as string;
+    const role = formData.get('role') as string;
 
     try {
       const response = await fetch('/api/auth/register', {
@@ -32,6 +35,9 @@ export function RegisterForm() {
           name,
           email,
           password,
+          phone,
+          company,
+          role,
         }),
       });
 
@@ -82,7 +88,7 @@ export function RegisterForm() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Name
+            Full Name
           </label>
           <Input
             id="name"
@@ -115,6 +121,42 @@ export function RegisterForm() {
             name="password"
             type="password"
             required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="phone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Phone Number
+          </label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="+1 (555) 000-0000"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="company" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Company Name
+          </label>
+          <Input
+            id="company"
+            name="company"
+            type="text"
+            placeholder="Your Company"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="role" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Role
+          </label>
+          <Input
+            id="role"
+            name="role"
+            type="text"
+            placeholder="Your Role"
           />
         </div>
 
