@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -41,7 +40,6 @@ interface Chatbot {
 }
 
 export function ChatbotForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [documents, setDocuments] = useState<File[]>([]);
@@ -126,16 +124,10 @@ export function ChatbotForm() {
 
       const chatbot = await response.json();
       setCreatedChatbot(chatbot);
-
-      // Fetch embed code
-      const embedResponse = await fetch(`/api/chatbots/${chatbot.id}/embed`);
-      if (embedResponse.ok) {
-        const { embedCode } = await embedResponse.json();
-        setEmbedCode(embedCode);
-      }
-
-      router.push('/dashboard');
-      router.refresh();
+      
+      // Don't navigate away immediately, let the user see the embed code
+      // router.push('/dashboard');
+      // router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
