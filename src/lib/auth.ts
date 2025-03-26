@@ -1,13 +1,14 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { NextAuthOptions } from "next-auth";
+import type { AuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
+import type { User } from "next-auth";
 import { db } from "@/lib/db";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(db),
   session: {
     strategy: "jwt",
@@ -37,7 +38,15 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          include: {
+            accounts: true,
+          },
         });
+
+        // If user exists and has a Google account, prevent email/password login
+        if (user?.accounts?.some(account => account.provider === "google")) {
+          throw new Error("This email is registered with Google. Please use Google to sign in.");
+        }
 
         if (!user || !user.password) {
           return null;
@@ -64,12 +73,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }: { user: any; account: any }) {
+    async signIn({ user, account }: { user: User; account: any }) {
       if (account?.provider === "google") {
         try {
           const existingUser = await db.user.findUnique({
             where: {
               email: user.email!,
+            },
+            include: {
+              accounts: true,
             },
           });
 
@@ -102,7 +114,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user }: { token: JWT; user: any }) {
+    async jwt({ token, user }: { token: JWT; user: User | null }) {
       if (user) {
         token.id = user.id;
         token.phone = user.phone;
