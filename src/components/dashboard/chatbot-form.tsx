@@ -18,9 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DocumentUpload } from './document-upload';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { EmbedCode } from './embed-code';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -32,6 +31,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface Chatbot {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string | null;
+  avatarUrl?: string | null;
+  websiteUrl?: string;
+}
+
 export function ChatbotForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +47,7 @@ export function ChatbotForm() {
   const [documents, setDocuments] = useState<File[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [createdChatbot, setCreatedChatbot] = useState<any>(null);
-  const [embedCode, setEmbedCode] = useState<string>('');
+  const [createdChatbot, setCreatedChatbot] = useState<Chatbot | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -203,7 +210,7 @@ export function ChatbotForm() {
               <FormField
                 control={form.control}
                 name="logo"
-                render={({ field: { onChange, value, ...field } }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Logo (Optional)</FormLabel>
                     <FormControl>
@@ -234,7 +241,7 @@ export function ChatbotForm() {
               <FormField
                 control={form.control}
                 name="avatar"
-                render={({ field: { onChange, value, ...field } }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Avatar (Optional)</FormLabel>
                     <FormControl>
@@ -286,31 +293,12 @@ export function ChatbotForm() {
 
       {createdChatbot && (
         <TabsContent value="embed">
-          <Card>
-            <CardHeader>
-              <CardTitle>Embed Your Chatbot</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                Copy and paste this code into your website's HTML, just before the closing &lt;/body&gt; tag:
-              </p>
-              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                <pre className="text-sm">
-                  <code>{embedCode}</code>
-                </pre>
-              </ScrollArea>
-              <div className="mt-4">
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(embedCode);
-                    // You might want to add a toast notification here
-                  }}
-                >
-                  Copy Code
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <EmbedCode
+            chatbotId={createdChatbot.id}
+            name={createdChatbot.name}
+            logoUrl={createdChatbot.logoUrl}
+            avatarUrl={createdChatbot.avatarUrl}
+          />
         </TabsContent>
       )}
     </Tabs>
