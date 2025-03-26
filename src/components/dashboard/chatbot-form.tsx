@@ -17,11 +17,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DocumentUpload } from './document-upload';
+import Image from 'next/image';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   websiteUrl: z.string().url('Please enter a valid URL').optional(),
+  logo: z.any().optional(),
+  avatar: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -31,6 +34,8 @@ export function ChatbotForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [documents, setDocuments] = useState<File[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -40,6 +45,32 @@ export function ChatbotForm() {
       websiteUrl: '',
     },
   });
+
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'logo' | 'avatar',
+    setPreview: (preview: string | null) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        form.setError(field, { message: 'Please upload an image file' });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        form.setError(field, { message: 'Image size should be less than 5MB' });
+        return;
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setPreview(previewUrl);
+      form.setValue(field, file);
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -54,6 +85,16 @@ export function ChatbotForm() {
       // Add website URL if provided
       if (values.websiteUrl) {
         formData.append('websiteUrl', values.websiteUrl);
+      }
+
+      // Add logo if provided
+      if (values.logo) {
+        formData.append('logo', values.logo);
+      }
+
+      // Add avatar if provided
+      if (values.avatar) {
+        formData.append('avatar', values.avatar);
       }
       
       // Append each document
@@ -135,6 +176,70 @@ export function ChatbotForm() {
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="logo"
+            render={({ field: { onChange, value, ...field } }) => (
+              <FormItem>
+                <FormLabel>Logo (Optional)</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, 'logo', setLogoPreview)}
+                      {...field}
+                    />
+                    {logoPreview && (
+                      <div className="relative w-32 h-32">
+                        <Image
+                          src={logoPreview}
+                          alt="Logo preview"
+                          fill
+                          className="object-contain rounded-lg"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="avatar"
+            render={({ field: { onChange, value, ...field } }) => (
+              <FormItem>
+                <FormLabel>Avatar (Optional)</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, 'avatar', setAvatarPreview)}
+                      {...field}
+                    />
+                    {avatarPreview && (
+                      <div className="relative w-32 h-32">
+                        <Image
+                          src={avatarPreview}
+                          alt="Avatar preview"
+                          fill
+                          className="object-contain rounded-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="space-y-4">
           <FormLabel>Knowledge Base Documents</FormLabel>

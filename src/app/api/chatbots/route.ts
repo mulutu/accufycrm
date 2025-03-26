@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import pdfParse from 'pdf-parse';
 import { Session } from 'next-auth';
 import { scrapeWebsite } from '@/lib/scraper';
+import { uploadToS3 } from '@/lib/s3';
 
 export async function POST(req: Request) {
   try {
@@ -16,11 +17,25 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
-    const documents = formData.getAll('documents') as File[];
     const websiteUrl = formData.get('websiteUrl') as string;
+    const logo = formData.get('logo') as File | null;
+    const avatar = formData.get('avatar') as File | null;
+    const documents = formData.getAll('documents') as File[];
 
     if (!name) {
       return new NextResponse('Name is required', { status: 400 });
+    }
+
+    // Upload images to S3 if provided
+    let logoUrl: string | null = null;
+    let avatarUrl: string | null = null;
+
+    if (logo) {
+      logoUrl = await uploadToS3(logo, 'logos');
+    }
+
+    if (avatar) {
+      avatarUrl = await uploadToS3(avatar, 'avatars');
     }
 
     // Create the chatbot
@@ -28,6 +43,8 @@ export async function POST(req: Request) {
       data: {
         name,
         description,
+        logoUrl,
+        avatarUrl,
         userId: session.user.id,
       },
     });
