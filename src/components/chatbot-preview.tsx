@@ -14,7 +14,9 @@ interface ChatbotPreviewProps {
   logoUrl: string;
   avatarUrl: string;
   primaryColor: string;
+  isDarkMode: boolean;
   bubbleMessage: string;
+  welcomeMessage: string;
 }
 
 export function ChatbotPreview({
@@ -23,19 +25,27 @@ export function ChatbotPreview({
   logoUrl,
   avatarUrl,
   primaryColor,
+  isDarkMode,
   bubbleMessage,
+  welcomeMessage,
 }: ChatbotPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      type: 'bot',
-      content: 'Hello! I\'m your AI assistant. How can I help you today?',
-      timestamp: new Date(),
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Add welcome message when chat is opened
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      const welcomeBotMessage: Message = {
+        type: 'bot',
+        content: welcomeMessage,
+        timestamp: new Date(),
+      };
+      setMessages([welcomeBotMessage]);
+    }
+  }, [isOpen, welcomeMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,159 +57,138 @@ export function ChatbotPreview({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!input.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       type: 'user',
-      content: inputMessage,
+      content: input,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputMessage('');
+    setInput('');
     setIsTyping(true);
 
     // Simulate bot response
     setTimeout(() => {
-      const botResponses = [
-        "I understand your question. Let me help you with that.",
-        "That's an interesting point. Here's what I think...",
-        "I can help you with that. Here's what you need to know...",
-        "Let me explain that for you...",
-        "I'll help you find the information you need.",
-      ];
-      
-      const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
-      
       const botMessage: Message = {
         type: 'bot',
-        content: randomResponse,
+        content: 'This is a preview response. The actual chatbot will provide real responses based on your training data.',
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, botMessage]);
       setIsTyping(false);
     }, 1500);
   };
 
-  return (
-    <div className="relative w-full h-[600px] border rounded-lg overflow-hidden bg-white">
-      {/* Chat Button - Always visible */}
-      <div className="absolute bottom-4 right-4 z-10">
-        <div
-          className="flex items-center space-x-2 px-4 py-2 rounded-full shadow-lg cursor-pointer transition-all hover:scale-105"
-          style={{ backgroundColor: primaryColor }}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-white">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Chatbot Avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                <span className="text-gray-500 text-sm">AI</span>
-              </div>
-            )}
-          </div>
-          <span className="text-white font-medium">{bubbleMessage}</span>
-        </div>
-      </div>
+  // Convert File to URL if needed
+  const getImageUrl = (url: string) => {
+    if (url.startsWith('data:')) {
+      return url;
+    }
+    return url || '';
+  };
 
-      {/* Chat Window Popup */}
+  return (
+    <div className="relative">
+      {/* Chat Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-4 right-4 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow z-10"
+        style={{ backgroundColor: primaryColor }}
+      >
+        <div className="w-12 h-12 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6 text-white"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+            />
+          </svg>
+        </div>
+        <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-lg p-3 text-sm">
+          {bubbleMessage}
+        </div>
+      </button>
+
+      {/* Chat Window */}
       {isOpen && (
-        <div className="absolute bottom-20 right-4 w-[400px] h-[500px] bg-white rounded-lg shadow-xl flex flex-col z-20">
+        <div className="fixed bottom-20 right-4 w-[400px] h-[500px] bg-white rounded-lg shadow-xl z-20">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div
+            className="p-4 rounded-t-lg flex items-center justify-between"
+            style={{ backgroundColor: primaryColor }}
+          >
             <div className="flex items-center space-x-3">
-              {logoUrl ? (
+              {logoUrl && (
                 <img
-                  src={logoUrl}
-                  alt="Chatbot Logo"
-                  className="w-8 h-8 object-contain"
+                  src={getImageUrl(logoUrl)}
+                  alt={name}
+                  className="w-8 h-8 rounded-full"
                 />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">AI</span>
-                </div>
               )}
               <div>
-                <h3 className="font-semibold">{name}</h3>
-                <p className="text-sm text-gray-500">{description}</p>
+                <h3 className="font-semibold text-white">{name}</h3>
+                <p className="text-sm text-white/80">{description}</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-white hover:text-white/80"
             >
               ✕
             </button>
           </div>
 
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Messages */}
+          <div className="h-[calc(100%-8rem)] overflow-y-auto p-4 space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center text-gray-500 mt-8">
+                {welcomeMessage}
+              </div>
+            )}
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex items-start space-x-3 ${
-                  message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                className={`flex ${
+                  message.type === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
-                {message.type === 'bot' && (
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden">
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt="Chatbot Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <span className="text-gray-500 text-sm">AI</span>
-                      </div>
-                    )}
-                  </div>
-                )}
                 <div
-                  className={`max-w-[80%] px-4 py-2 rounded-lg ${
+                  className={`max-w-[80%] rounded-lg p-3 ${
                     message.type === 'user'
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className="text-xs mt-1 opacity-70">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  {message.type === 'bot' && avatarUrl && (
+                    <img
+                      src={getImageUrl(avatarUrl)}
+                      alt="Bot Avatar"
+                      className="w-6 h-6 rounded-full mb-2"
+                    />
+                  )}
+                  <p>{message.content}</p>
+                  <span className="text-xs opacity-70 mt-1 block">
+                    {message.timestamp.toLocaleTimeString()}
+                  </span>
                 </div>
               </div>
             ))}
             {isTyping && (
-              <div className="flex items-start space-x-3">
-                <div className="relative w-8 h-8 rounded-full overflow-hidden">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Chatbot Avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <span className="text-gray-500 text-sm">AI</span>
-                    </div>
-                  )}
-                </div>
-                <div className="bg-gray-100 text-gray-800 rounded-lg rounded-bl-none px-4 py-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="flex justify-start">
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
                   </div>
                 </div>
               </div>
@@ -207,23 +196,21 @@ export function ChatbotPreview({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
+          {/* Input */}
           <form onSubmit={handleSendMessage} className="p-4 border-t">
-            <div className="flex items-center space-x-2">
+            <div className="flex space-x-2">
               <input
                 type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                style={{ borderColor: primaryColor + '50' }}
-                disabled={isTyping}
+                className="flex-1 rounded-lg border p-2 focus:outline-none focus:ring-2"
+                style={{ borderColor: primaryColor }}
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg text-white"
                 style={{ backgroundColor: primaryColor }}
-                disabled={isTyping || !inputMessage.trim()}
               >
                 Send
               </button>

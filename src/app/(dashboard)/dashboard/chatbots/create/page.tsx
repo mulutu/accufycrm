@@ -97,11 +97,27 @@ export default function CreateChatbotPage() {
   };
 
   const handleLogoChange = (file: File | null) => {
-    setFormData((prev) => ({ ...prev, logo: file }));
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, logo: file, logoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData((prev) => ({ ...prev, logo: null, logoUrl: '' }));
+    }
   };
 
   const handleAvatarChange = (file: File | null) => {
-    setFormData((prev) => ({ ...prev, avatar: file }));
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, avatar: file, avatarUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData((prev) => ({ ...prev, avatar: null, avatarUrl: '' }));
+    }
   };
 
   return (
