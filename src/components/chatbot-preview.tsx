@@ -10,24 +10,28 @@ interface Message {
 
 interface ChatbotPreviewProps {
   name: string;
-  logo?: string;
-  avatar?: string;
+  description?: string;
+  logoUrl?: string;
+  avatarUrl?: string;
   primaryColor?: string;
-  isDarkMode?: boolean;
+  bubbleMessage?: string;
   welcomeMessage?: string;
   width?: number;
   height?: number;
+  isDarkMode?: boolean;
 }
 
 export function ChatbotPreview({
   name,
-  logo,
-  avatar,
+  description,
+  logoUrl,
+  avatarUrl,
   primaryColor = '#000000',
-  isDarkMode = false,
+  bubbleMessage,
   welcomeMessage = 'Hello! How can I help you today?',
   width = 400,
   height = 600,
+  isDarkMode = false,
 }: ChatbotPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -82,11 +86,12 @@ export function ChatbotPreview({
   };
 
   // Convert File to URL if needed
-  const getImageUrl = (url: string) => {
+  const getImageUrl = (url: string | undefined) => {
+    if (!url) return '';
     if (url.startsWith('data:')) {
       return url;
     }
-    return url || '';
+    return url;
   };
 
   return (
@@ -132,15 +137,21 @@ export function ChatbotPreview({
             }}
           >
             <div className="flex items-center space-x-3">
-              {logo && (
+              {logoUrl && (
                 <img
-                  src={logo}
+                  src={logoUrl}
                   alt={name}
                   className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    console.error('Error loading logo:', e);
+                  }}
                 />
               )}
               <div>
                 <h3 className="font-semibold text-white">{name}</h3>
+                {description && (
+                  <p className="text-sm text-white/80">{description}</p>
+                )}
               </div>
             </div>
             <button
@@ -172,11 +183,14 @@ export function ChatbotPreview({
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  {message.type === 'bot' && avatar && (
+                  {message.type === 'bot' && avatarUrl && (
                     <img
-                      src={avatar}
+                      src={avatarUrl}
                       alt="Bot Avatar"
                       className="w-6 h-6 rounded-full mb-2 object-cover"
+                      onError={(e) => {
+                        console.error('Error loading avatar:', e);
+                      }}
                     />
                   )}
                   <p className="text-sm">{message.content}</p>

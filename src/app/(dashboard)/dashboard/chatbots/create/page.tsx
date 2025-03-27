@@ -27,6 +27,7 @@ interface FormData {
   instructions: string;
   welcomeMessage: string;
   documents: File[];
+  isDarkMode: boolean;
 }
 
 export default function CreateChatbotPage() {
@@ -42,11 +43,12 @@ export default function CreateChatbotPage() {
     avatar: null,
     avatarUrl: '',
     websiteUrl: '',
-    primaryColor: '#2563eb',
-    bubbleMessage: 'Hi! 👋 Click me to start chatting',
+    primaryColor: '#000000',
+    bubbleMessage: 'Chat with us!',
     instructions: '',
     welcomeMessage: 'Hello! I\'m your AI assistant. How can I help you today?',
     documents: [],
+    isDarkMode: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -446,6 +448,7 @@ export default function CreateChatbotPage() {
                 primaryColor={formData.primaryColor}
                 bubbleMessage={formData.bubbleMessage}
                 welcomeMessage={formData.welcomeMessage}
+                isDarkMode={formData.isDarkMode}
               />
             </CardContent>
           </Card>
