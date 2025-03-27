@@ -137,13 +137,12 @@ export default function CreateChatbotPage() {
 
                 <div>
                   <Label htmlFor="welcomeMessage">Welcome Message</Label>
-                  <Textarea
+                  <Input
                     id="welcomeMessage"
                     name="welcomeMessage"
                     value={formData.welcomeMessage}
                     onChange={handleChange}
                     placeholder="Enter the first message users will see when they start a chat..."
-                    className="min-h-[100px]"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     This message will appear when users first open the chat
