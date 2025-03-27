@@ -11,11 +11,14 @@ import { ChatbotPreview } from '@/components/chatbot-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface FormData {
   name: string;
   description: string;
+  logo: File | null;
   logoUrl: string;
+  avatar: File | null;
   avatarUrl: string;
   websiteUrl: string;
   primaryColor: string;
@@ -29,7 +32,9 @@ export default function CreateChatbotPage() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
+    logo: null,
     logoUrl: '',
+    avatar: null,
     avatarUrl: '',
     websiteUrl: '',
     primaryColor: '#2563eb',
@@ -44,7 +49,11 @@ export default function CreateChatbotPage() {
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          formDataToSend.append(key, String(value));
+          if ((key === 'logo' || key === 'avatar') && value instanceof File) {
+            formDataToSend.append(key, value);
+          } else {
+            formDataToSend.append(key, String(value));
+          }
         }
       });
 
@@ -78,6 +87,14 @@ export default function CreateChatbotPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogoChange = (file: File | null) => {
+    setFormData((prev) => ({ ...prev, logo: file }));
+  };
+
+  const handleAvatarChange = (file: File | null) => {
+    setFormData((prev) => ({ ...prev, avatar: file }));
   };
 
   return (
@@ -130,29 +147,21 @@ export default function CreateChatbotPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    name="logoUrl"
-                    type="url"
-                    value={formData.logoUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
+                <FileUpload
+                  label="Logo"
+                  value={formData.logoUrl}
+                  onChange={handleLogoChange}
+                  accept="image/*"
+                  maxSize={5242880} // 5MB
+                />
 
-                <div>
-                  <Label htmlFor="avatarUrl">Avatar URL</Label>
-                  <Input
-                    id="avatarUrl"
-                    name="avatarUrl"
-                    type="url"
-                    value={formData.avatarUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/avatar.png"
-                  />
-                </div>
+                <FileUpload
+                  label="Avatar"
+                  value={formData.avatarUrl}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  maxSize={5242880} // 5MB
+                />
 
                 <div>
                   <Label htmlFor="primaryColor">Primary Color</Label>
