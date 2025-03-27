@@ -120,7 +120,7 @@ export function ChatbotPreview({
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 w-[400px] h-[500px] bg-white rounded-lg shadow-xl z-20 flex flex-col">
+        <div className="fixed bottom-24 right-4 w-[400px] h-[500px] bg-white rounded-lg shadow-xl z-20 flex flex-col">
           {/* Header */}
           <div
             className="p-4 rounded-t-lg flex items-center justify-between"

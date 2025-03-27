@@ -33,6 +33,7 @@ export default function CreateChatbotPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTab, setCurrentTab] = useState('configure');
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
@@ -120,6 +121,38 @@ export default function CreateChatbotPage() {
     }
   };
 
+  const handleNext = () => {
+    switch (currentTab) {
+      case 'configure':
+        setCurrentTab('customize');
+        break;
+      case 'customize':
+        setCurrentTab('train');
+        break;
+      case 'train':
+        setCurrentTab('embed');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleBack = () => {
+    switch (currentTab) {
+      case 'customize':
+        setCurrentTab('configure');
+        break;
+      case 'train':
+        setCurrentTab('customize');
+        break;
+      case 'embed':
+        setCurrentTab('train');
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -130,7 +163,7 @@ export default function CreateChatbotPage() {
         {/* Left Column - Configuration */}
         <div className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Tabs defaultValue="configure" className="space-y-6">
+            <Tabs value={currentTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="configure">Configure</TabsTrigger>
                 <TabsTrigger value="customize">Customize</TabsTrigger>
@@ -190,6 +223,12 @@ export default function CreateChatbotPage() {
                     className="min-h-[100px]"
                   />
                 </div>
+
+                <div className="flex justify-end">
+                  <Button type="button" onClick={handleNext}>
+                    Next
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Customize Tab */}
@@ -232,6 +271,15 @@ export default function CreateChatbotPage() {
                   />
                   <Label htmlFor="isDarkMode">Dark Mode</Label>
                 </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={handleNext}>
+                    Next
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Train Tab */}
@@ -264,6 +312,15 @@ export default function CreateChatbotPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={handleNext}>
+                    Next
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Embed Tab */}
@@ -271,16 +328,18 @@ export default function CreateChatbotPage() {
                 <EmbedCode
                   chatbotId="preview"
                   name={formData.name}
-                  primaryColor={formData.primaryColor}
                 />
+
+                <div className="flex justify-between mt-6">
+                  <Button type="button" variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Creating...' : 'Save Chatbot'}
+                  </Button>
+                </div>
               </TabsContent>
             </Tabs>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Chatbot'}
-              </Button>
-            </div>
           </form>
         </div>
 
