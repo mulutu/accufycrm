@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Check, Copy } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 interface EmbedCodeProps {
   chatbotId: string;
@@ -13,10 +14,12 @@ interface EmbedCodeProps {
 
 export function EmbedCode({ chatbotId, name, websiteUrl }: EmbedCodeProps) {
   const { toast } = useToast();
+  const [uuid] = useState(() => uuidv4());
+
   const embedCode = `<script 
   defer 
   src="https://cdn.accufy.com/chatbot.js" 
-  data-chatbot-uuid="${chatbotId}" 
+  data-chatbot-uuid="${uuid}" 
   data-iframe-width="400" 
   data-iframe-height="600" >
 </script>`;
@@ -64,11 +67,11 @@ export function EmbedCode({ chatbotId, name, websiteUrl }: EmbedCodeProps) {
               </div>
 
               <div className="relative">
-                <ScrollArea className="h-[100px] rounded-md border p-4">
+                <div className="rounded-md border p-4">
                   <pre className="text-sm">
                     <code>{embedCode}</code>
                   </pre>
-                </ScrollArea>
+                </div>
                 <Button
                   size="sm"
                   className="absolute right-2 top-2"
