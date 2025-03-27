@@ -1,16 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { Bot, Send } from 'lucide-react';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 interface ChatbotPreviewProps {
   name: string;
@@ -18,7 +8,7 @@ interface ChatbotPreviewProps {
   logoUrl: string;
   avatarUrl: string;
   primaryColor: string;
-  isDarkMode: boolean;
+  bubbleMessage: string;
 }
 
 export function ChatbotPreview({
@@ -27,133 +17,121 @@ export function ChatbotPreview({
   logoUrl,
   avatarUrl,
   primaryColor,
-  isDarkMode,
+  bubbleMessage,
 }: ChatbotPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{ type: 'user' | 'bot'; content: string }>>([
-    {
-      type: 'bot',
-      content: 'Hello! How can I help you today?',
-    },
-  ]);
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-
-    setMessages((prev) => [...prev, { type: 'user', content: message }]);
-    setMessage('');
-
-    // Simulate bot response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: 'bot',
-          content: 'This is a preview message. The actual chatbot will respond based on your training data.',
-        },
-      ]);
-    }, 1000);
-  };
 
   return (
-    <div
-      className={`fixed bottom-4 right-4 w-96 rounded-lg shadow-lg ${
-        isDarkMode ? 'bg-gray-800' : 'bg-white'
-      }`}
-      style={{ borderColor: primaryColor }}
-    >
-      {!isOpen ? (
-        <button
+    <div className="relative w-full h-[600px] border rounded-lg overflow-hidden bg-white">
+      {/* Chat Button - Always visible */}
+      <div className="absolute bottom-4 right-4">
+        <div
+          className="flex items-center space-x-2 px-4 py-2 rounded-full shadow-lg cursor-pointer transition-all hover:scale-105"
+          style={{ backgroundColor: primaryColor }}
           onClick={() => setIsOpen(true)}
-          className="w-full p-4 flex items-center space-x-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          style={{ backgroundColor: primaryColor, color: 'white' }}
         >
-          {logoUrl ? (
-            <img src={logoUrl} alt={name} className="w-8 h-8" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-              <span className="text-lg font-bold" style={{ color: primaryColor }}>
-                {name.charAt(0)}
-              </span>
-            </div>
-          )}
-          <div className="text-left">
-            <h3 className="font-semibold">{name}</h3>
-            <p className="text-sm opacity-90">{description}</p>
-          </div>
-        </button>
-      ) : (
-        <div className="flex flex-col h-[600px]">
-          <div
-            className="p-4 flex items-center justify-between border-b"
-            style={{ borderColor: primaryColor }}
-          >
-            <div className="flex items-center space-x-3">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={name} className="w-8 h-8 rounded-full" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-lg font-bold" style={{ color: primaryColor }}>
-                    {name.charAt(0)}
-                  </span>
-                </div>
-              )}
-              <div>
-                <h3 className="font-semibold">{name}</h3>
-                <p className="text-sm text-gray-500">{description}</p>
+          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-white">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Chatbot Avatar"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <span className="text-gray-500 text-sm">AI</span>
               </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              ✕
-            </button>
+            )}
           </div>
+          <span className="text-white font-medium">{bubbleMessage}</span>
+        </div>
+      </div>
 
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    msg.type === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+      {/* Chat Window Popup */}
+      {isOpen && (
+        <div className="absolute inset-0 flex items-end justify-end p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/20"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Chat Window */}
+          <div className="relative w-[400px] h-[600px] bg-white rounded-lg shadow-xl flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center space-x-3">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt="Chatbot Logo"
+                    className="w-8 h-8 object-contain"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">AI</span>
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-semibold">{name}</h3>
+                  <p className="text-sm text-gray-500">{description}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Chatbot Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <span className="text-gray-500 text-sm">AI</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      msg.type === 'user'
-                        ? 'rounded-br-none'
-                        : 'rounded-bl-none bg-gray-100 dark:bg-gray-700'
-                    }`}
-                    style={
-                      msg.type === 'user'
-                        ? { backgroundColor: primaryColor, color: 'white' }
-                        : undefined
-                    }
+                    className="inline-block px-4 py-2 rounded-lg"
+                    style={{ backgroundColor: primaryColor + '20' }}
                   >
-                    {msg.content}
+                    <p className="text-sm">
+                      Hello! I&apos;m your AI assistant. How can I help you today?
+                    </p>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </ScrollArea>
 
-          <form onSubmit={handleSendMessage} className="p-4 border-t">
-            <div className="flex space-x-2">
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1"
-              />
-              <Button type="submit" style={{ backgroundColor: primaryColor }}>
-                Send
-              </Button>
+            {/* Input Area */}
+            <div className="p-4 border-t">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                  style={{ borderColor: primaryColor + '50' }}
+                />
+                <button
+                  className="px-4 py-2 rounded-lg text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Send
+                </button>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>

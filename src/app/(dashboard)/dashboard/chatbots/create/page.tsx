@@ -23,6 +23,7 @@ interface FormData {
   websiteUrl: string;
   primaryColor: string;
   isDarkMode: boolean;
+  bubbleMessage: string;
 }
 
 export default function CreateChatbotPage() {
@@ -39,6 +40,7 @@ export default function CreateChatbotPage() {
     websiteUrl: '',
     primaryColor: '#2563eb',
     isDarkMode: false,
+    bubbleMessage: 'Hi! 👋 Click me to start chatting',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,6 +166,20 @@ export default function CreateChatbotPage() {
                 />
 
                 <div>
+                  <Label htmlFor="bubbleMessage">Bubble Message</Label>
+                  <Input
+                    id="bubbleMessage"
+                    name="bubbleMessage"
+                    value={formData.bubbleMessage}
+                    onChange={handleChange}
+                    placeholder="Hi! 👋 Click me to start chatting"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    This message will appear on the chat bubble button
+                  </p>
+                </div>
+
+                <div>
                   <Label htmlFor="primaryColor">Primary Color</Label>
                   <Input
                     id="primaryColor"
@@ -231,6 +247,7 @@ export default function CreateChatbotPage() {
                 avatarUrl={formData.avatarUrl}
                 primaryColor={formData.primaryColor}
                 isDarkMode={formData.isDarkMode}
+                bubbleMessage={formData.bubbleMessage}
               />
             </CardContent>
           </Card>
