@@ -16,9 +16,11 @@ export function EmbedCode({ chatbotId, name, websiteUrl }: EmbedCodeProps) {
   const { toast } = useToast();
   const [uuid] = useState(() => uuidv4());
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
   const embedCode = `<script 
   defer 
-  src="https://cdn.accufy.com/chatbot.js" 
+  src="${appUrl}/vendor/chatbot/js/external-chatbot.js" 
   data-chatbot-uuid="${uuid}" 
   data-iframe-width="400" 
   data-iframe-height="600" >
