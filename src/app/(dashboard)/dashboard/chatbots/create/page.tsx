@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { FileUpload } from '@/components/ui/file-upload';
+import { EmbedCode } from '@/components/dashboard/embed-code';
 
 interface FormData {
   name: string;
@@ -24,6 +25,7 @@ interface FormData {
   primaryColor: string;
   isDarkMode: boolean;
   bubbleMessage: string;
+  instructions: string;
 }
 
 export default function CreateChatbotPage() {
@@ -41,6 +43,7 @@ export default function CreateChatbotPage() {
     primaryColor: '#2563eb',
     isDarkMode: false,
     bubbleMessage: 'Hi! 👋 Click me to start chatting',
+    instructions: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,17 +107,21 @@ export default function CreateChatbotPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Create New Chatbot</h1>
       </div>
-      
-      <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="settings">
+      <div className="grid grid-cols-2 gap-6">
+        {/* Left Column - Configuration */}
+        <div className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <Tabs defaultValue="configure" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="configure">Configure</TabsTrigger>
+                <TabsTrigger value="customize">Customize</TabsTrigger>
+                <TabsTrigger value="train">Train</TabsTrigger>
+                <TabsTrigger value="embed">Embed</TabsTrigger>
+              </TabsList>
+
+              {/* Configure Tab */}
+              <TabsContent value="configure" className="space-y-4">
                 <div>
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -127,28 +134,34 @@ export default function CreateChatbotPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
+                  <Label htmlFor="bubbleMessage">Bubble Message</Label>
+                  <Input
+                    id="bubbleMessage"
+                    name="bubbleMessage"
+                    value={formData.bubbleMessage}
                     onChange={handleChange}
-                    required
+                    placeholder="Hi! 👋 Click me to start chatting"
                   />
+                  <p className="text-sm text-gray-500 mt-1">
+                    This message will appear on the chat bubble button
+                  </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="websiteUrl">Website URL</Label>
-                  <Input
-                    id="websiteUrl"
-                    name="websiteUrl"
-                    type="url"
-                    value={formData.websiteUrl}
+                  <Label htmlFor="instructions">Chatbot Instructions</Label>
+                  <Textarea
+                    id="instructions"
+                    name="instructions"
+                    value={formData.instructions}
                     onChange={handleChange}
-                    placeholder="https://example.com"
+                    placeholder="Enter instructions for how the chatbot should behave..."
+                    className="min-h-[100px]"
                   />
                 </div>
+              </TabsContent>
 
+              {/* Customize Tab */}
+              <TabsContent value="customize" className="space-y-4">
                 <FileUpload
                   label="Logo"
                   value={formData.logoUrl}
@@ -164,20 +177,6 @@ export default function CreateChatbotPage() {
                   accept="image/*"
                   maxSize={5242880} // 5MB
                 />
-
-                <div>
-                  <Label htmlFor="bubbleMessage">Bubble Message</Label>
-                  <Input
-                    id="bubbleMessage"
-                    name="bubbleMessage"
-                    value={formData.bubbleMessage}
-                    onChange={handleChange}
-                    placeholder="Hi! 👋 Click me to start chatting"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    This message will appear on the chat bubble button
-                  </p>
-                </div>
 
                 <div>
                   <Label htmlFor="primaryColor">Primary Color</Label>
@@ -201,9 +200,22 @@ export default function CreateChatbotPage() {
                   />
                   <Label htmlFor="isDarkMode">Dark Mode</Label>
                 </div>
-              </div>
+              </TabsContent>
 
-              <div className="space-y-4">
+              {/* Train Tab */}
+              <TabsContent value="train" className="space-y-4">
+                <div>
+                  <Label htmlFor="websiteUrl">Website URL</Label>
+                  <Input
+                    id="websiteUrl"
+                    name="websiteUrl"
+                    type="url"
+                    value={formData.websiteUrl}
+                    onChange={handleChange}
+                    placeholder="https://example.com"
+                  />
+                </div>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Upload Documents</CardTitle>
@@ -220,8 +232,17 @@ export default function CreateChatbotPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </div>
+              </TabsContent>
+
+              {/* Embed Tab */}
+              <TabsContent value="embed">
+                <EmbedCode
+                  chatbotId="preview"
+                  name={formData.name}
+                  primaryColor={formData.primaryColor}
+                />
+              </TabsContent>
+            </Tabs>
 
             <div className="flex justify-end">
               <Button type="submit" disabled={isLoading}>
@@ -229,9 +250,10 @@ export default function CreateChatbotPage() {
               </Button>
             </div>
           </form>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="preview">
+        {/* Right Column - Preview */}
+        <div className="sticky top-6">
           <Card>
             <CardHeader>
               <CardTitle>Chatbot Preview</CardTitle>
@@ -251,8 +273,8 @@ export default function CreateChatbotPage() {
               />
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 } 
