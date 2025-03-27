@@ -412,6 +412,7 @@ export default function CreateChatbotPage() {
                 <EmbedCode
                   chatbotId="preview"
                   name={formData.name}
+                  websiteUrl={formData.websiteUrl}
                 />
 
                 <div className="flex justify-between mt-6">
