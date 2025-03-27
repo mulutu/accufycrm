@@ -115,7 +115,7 @@ export function ChatbotPreview({
       {/* Chat Window */}
       {isOpen && (
         <div 
-          className="absolute bottom-20 right-4 z-20 flex flex-col rounded-lg border bg-white shadow-lg"
+          className="absolute bottom-20 right-4 z-20 flex flex-col rounded-lg border bg-white shadow-lg transition-all duration-200"
           style={{ 
             width: `${width}px`,
             height: `${height}px`,

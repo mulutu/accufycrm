@@ -7,7 +7,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { ChatbotPreview } from '@/components/chatbot-preview';
 
 interface EmbedCodeProps {
   chatbotId: string;
@@ -152,19 +151,6 @@ export function EmbedCode({
                   </svg>
                   <span>This embed code can only be used on the website URL specified above.</span>
                 </div>
-              </div>
-
-              <div className="mt-8">
-                <ChatbotPreview
-                  name={name}
-                  logo={logo}
-                  avatar={avatar}
-                  primaryColor={primaryColor}
-                  isDarkMode={isDarkMode}
-                  welcomeMessage={welcomeMessage}
-                  width={width}
-                  height={height}
-                />
               </div>
             </>
           ) : (
