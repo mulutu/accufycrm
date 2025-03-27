@@ -125,15 +125,18 @@ export function ChatbotPreview({
         >
           {/* Header */}
           <div
-            className="p-4 rounded-t-lg flex items-center justify-between"
-            style={{ backgroundColor: primaryColor }}
+            className="flex items-center justify-between border-b p-4"
+            style={{ 
+              backgroundColor: primaryColor,
+              borderColor: isDarkMode ? '#333333' : '#e5e7eb'
+            }}
           >
             <div className="flex items-center space-x-3">
               {logo && (
                 <img
-                  src={getImageUrl(logo)}
+                  src={logo}
                   alt={name}
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full object-cover"
                 />
               )}
               <div>
@@ -171,12 +174,12 @@ export function ChatbotPreview({
                 >
                   {message.type === 'bot' && avatar && (
                     <img
-                      src={getImageUrl(avatar)}
+                      src={avatar}
                       alt="Bot Avatar"
-                      className="w-6 h-6 rounded-full mb-2"
+                      className="w-6 h-6 rounded-full mb-2 object-cover"
                     />
                   )}
-                  <p>{message.content}</p>
+                  <p className="text-sm">{message.content}</p>
                   <span className="text-xs opacity-70 mt-1 block">
                     {message.timestamp.toLocaleTimeString()}
                   </span>
@@ -186,7 +189,7 @@ export function ChatbotPreview({
             {isTyping && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 rounded-lg p-3">
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
