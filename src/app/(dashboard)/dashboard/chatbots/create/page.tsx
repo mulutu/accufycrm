@@ -26,6 +26,7 @@ interface FormData {
   isDarkMode: boolean;
   bubbleMessage: string;
   instructions: string;
+  welcomeMessage: string;
 }
 
 export default function CreateChatbotPage() {
@@ -44,6 +45,7 @@ export default function CreateChatbotPage() {
     isDarkMode: false,
     bubbleMessage: 'Hi! 👋 Click me to start chatting',
     instructions: '',
+    welcomeMessage: 'Hello! I\'m your AI assistant. How can I help you today?',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,6 +133,21 @@ export default function CreateChatbotPage() {
                     onChange={handleChange}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="welcomeMessage">Welcome Message</Label>
+                  <Textarea
+                    id="welcomeMessage"
+                    name="welcomeMessage"
+                    value={formData.welcomeMessage}
+                    onChange={handleChange}
+                    placeholder="Enter the first message users will see when they start a chat..."
+                    className="min-h-[100px]"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    This message will appear when users first open the chat
+                  </p>
                 </div>
 
                 <div>
@@ -270,6 +287,7 @@ export default function CreateChatbotPage() {
                 primaryColor={formData.primaryColor}
                 isDarkMode={formData.isDarkMode}
                 bubbleMessage={formData.bubbleMessage}
+                welcomeMessage={formData.welcomeMessage}
               />
             </CardContent>
           </Card>
