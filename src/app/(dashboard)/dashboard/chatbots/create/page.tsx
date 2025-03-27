@@ -341,7 +341,7 @@ export default function CreateChatbotPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upload Documents</CardTitle>
+                    <CardTitle>Upload Documents (Q&As, FAQs, Product Info, etc.)</CardTitle>
                     <CardDescription>
                       Upload PDF, DOC, DOCX, or TXT files to train your chatbot
                     </CardDescription>
