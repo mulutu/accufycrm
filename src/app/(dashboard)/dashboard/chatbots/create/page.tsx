@@ -23,10 +23,10 @@ interface FormData {
   avatarUrl: string;
   websiteUrl: string;
   primaryColor: string;
-  isDarkMode: boolean;
   bubbleMessage: string;
   instructions: string;
   welcomeMessage: string;
+  documents: File[];
 }
 
 export default function CreateChatbotPage() {
@@ -43,10 +43,10 @@ export default function CreateChatbotPage() {
     avatarUrl: '',
     websiteUrl: '',
     primaryColor: '#2563eb',
-    isDarkMode: false,
     bubbleMessage: 'Hi! 👋 Click me to start chatting',
     instructions: '',
     welcomeMessage: 'Hello! I\'m your AI assistant. How can I help you today?',
+    documents: [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,6 +153,55 @@ export default function CreateChatbotPage() {
     }
   };
 
+  const handleDocumentUpload = (files: File[]) => {
+    const validFiles = files.filter(file => {
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      const isValidType = validTypes.includes(file.type);
+      const isValidSize = file.size <= 5242880; // 5MB
+
+      if (!isValidType) {
+        toast({
+          title: 'Invalid file type',
+          description: `${file.name} is not a valid file type. Please upload PDF, DOC, DOCX, or TXT files.`,
+          variant: 'destructive',
+        });
+      }
+      if (!isValidSize) {
+        toast({
+          title: 'File too large',
+          description: `${file.name} is too large. Maximum file size is 5MB.`,
+          variant: 'destructive',
+        });
+      }
+
+      return isValidType && isValidSize;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      documents: [...prev.documents, ...validFiles]
+    }));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer.files);
+    handleDocumentUpload(files);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      handleDocumentUpload(files);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -241,16 +290,21 @@ export default function CreateChatbotPage() {
                   maxSize={5242880} // 5MB
                 />
 
-                <FileUpload
-                  label="Avatar"
-                  value={formData.avatarUrl}
-                  onChange={handleAvatarChange}
-                  accept="image/*"
-                  maxSize={5242880} // 5MB
-                />
+                <div>                  
+                  <FileUpload
+                    label="Avatar"                    
+                    value={formData.avatarUrl}
+                    onChange={handleAvatarChange}
+                    accept="image/*"
+                    maxSize={5242880} // 5MB
+                  />
+                </div>
 
                 <div>
                   <Label htmlFor="primaryColor">Primary Color</Label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Choose a color that represents your brand.
+                  </p>
                   <Input
                     id="primaryColor"
                     name="primaryColor"
@@ -259,17 +313,6 @@ export default function CreateChatbotPage() {
                     onChange={handleChange}
                     className="h-10"
                   />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isDarkMode"
-                    checked={formData.isDarkMode}
-                    onCheckedChange={(checked: boolean) =>
-                      setFormData((prev) => ({ ...prev, isDarkMode: checked }))
-                    }
-                  />
-                  <Label htmlFor="isDarkMode">Dark Mode</Label>
                 </div>
 
                 <div className="flex justify-between">
@@ -304,12 +347,53 @@ export default function CreateChatbotPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                    <div
+                      className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onClick={() => document.getElementById('document-upload')?.click()}
+                    >
+                      <input
+                        id="document-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.txt"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
                       <p className="text-gray-500">Drag and drop files here</p>
                       <p className="text-sm text-gray-400 mt-2">
                         or click to select files
                       </p>
                     </div>
+
+                    {formData.documents.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <h4 className="font-medium">Uploaded Documents:</h4>
+                        <div className="space-y-2">
+                          {formData.documents.map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                            >
+                              <span className="text-sm">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    documents: prev.documents.filter((_, i) => i !== index)
+                                  }));
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -359,7 +443,6 @@ export default function CreateChatbotPage() {
                 logoUrl={formData.logoUrl}
                 avatarUrl={formData.avatarUrl}
                 primaryColor={formData.primaryColor}
-                isDarkMode={formData.isDarkMode}
                 bubbleMessage={formData.bubbleMessage}
                 welcomeMessage={formData.welcomeMessage}
               />
