@@ -7,14 +7,29 @@ import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { ChatbotPreview } from '@/components/chatbot-preview';
 
 interface EmbedCodeProps {
   chatbotId: string;
   name: string;
   websiteUrl: string;
+  logo?: string;
+  avatar?: string;
+  primaryColor?: string;
+  isDarkMode?: boolean;
+  welcomeMessage?: string;
 }
 
-export function EmbedCode({ chatbotId, name, websiteUrl }: EmbedCodeProps) {
+export function EmbedCode({ 
+  chatbotId, 
+  name, 
+  websiteUrl,
+  logo,
+  avatar,
+  primaryColor,
+  isDarkMode,
+  welcomeMessage
+}: EmbedCodeProps) {
   const { toast } = useToast();
   const [uuid] = useState(() => uuidv4());
   const [width, setWidth] = useState(400);
@@ -137,6 +152,19 @@ export function EmbedCode({ chatbotId, name, websiteUrl }: EmbedCodeProps) {
                   </svg>
                   <span>This embed code can only be used on the website URL specified above.</span>
                 </div>
+              </div>
+
+              <div className="mt-8">
+                <ChatbotPreview
+                  name={name}
+                  logo={logo}
+                  avatar={avatar}
+                  primaryColor={primaryColor}
+                  isDarkMode={isDarkMode}
+                  welcomeMessage={welcomeMessage}
+                  width={width}
+                  height={height}
+                />
               </div>
             </>
           ) : (
