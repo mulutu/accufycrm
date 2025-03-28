@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { FileUpload } from '@/components/ui/file-upload';
 import { EmbedCode } from '@/components/dashboard/embed-code';
+import { Customize } from '@/components/dashboard/customize';
+import { SizeCustomize } from '@/components/dashboard/size-customize';
 
 interface FormData {
   name: string;
@@ -28,6 +30,8 @@ interface FormData {
   welcomeMessage: string;
   documents: File[];
   isDarkMode: boolean;
+  width: number;
+  height: number;
 }
 
 export default function CreateChatbotPage() {
@@ -49,6 +53,8 @@ export default function CreateChatbotPage() {
     welcomeMessage: 'Hello! I\'m your AI assistant. How can I help you today?',
     documents: [],
     isDarkMode: false,
+    width: 400,
+    height: 600,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,63 +239,73 @@ export default function CreateChatbotPage() {
               </TabsList>
 
               {/* Configure Tab */}
-              <TabsContent value="configure" className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+              <TabsContent value="configure">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Configure Chatbot</CardTitle>
+                    <CardDescription>
+                      Set up the basic settings and behavior of your chatbot
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="welcomeMessage">Welcome Message</Label>
-                  <Input
-                    id="welcomeMessage"
-                    name="welcomeMessage"
-                    value={formData.welcomeMessage}
-                    onChange={handleChange}
-                    placeholder="Enter the first message users will see when they start a chat..."
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    This message will appear when users first open the chat
-                  </p>
-                </div>
+                    <div>
+                      <Label htmlFor="welcomeMessage">Welcome Message</Label>
+                      <Input
+                        id="welcomeMessage"
+                        name="welcomeMessage"
+                        value={formData.welcomeMessage}
+                        onChange={handleChange}
+                        placeholder="Enter the first message users will see when they start a chat..."
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        This message will appear when users first open the chat
+                      </p>
+                    </div>
 
-                <div>
-                  <Label htmlFor="bubbleMessage">Bubble Message</Label>
-                  <Input
-                    id="bubbleMessage"
-                    name="bubbleMessage"
-                    value={formData.bubbleMessage}
-                    onChange={handleChange}
-                    placeholder="Hi! 👋 Click me to start chatting"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    This message will appear on the chat bubble button
-                  </p>
-                </div>
+                    <div>
+                      <Label htmlFor="bubbleMessage">Bubble Message</Label>
+                      <Input
+                        id="bubbleMessage"
+                        name="bubbleMessage"
+                        value={formData.bubbleMessage}
+                        onChange={handleChange}
+                        placeholder="Hi! 👋 Click me to start chatting"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        This message will appear on the chat bubble button
+                      </p>
+                    </div>
 
-                <div>
-                  <Label htmlFor="instructions">Chatbot Instructions</Label>
-                  <Textarea
-                    id="instructions"
-                    name="instructions"
-                    value={formData.instructions}
-                    onChange={handleChange}
-                    placeholder="Enter instructions for how the chatbot should behave..."
-                    className="min-h-[100px]"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="instructions">Chatbot Instructions</Label>
+                      <Textarea
+                        id="instructions"
+                        name="instructions"
+                        value={formData.instructions}
+                        onChange={handleChange}
+                        placeholder="Enter instructions for how the chatbot should behave..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
 
-                <div className="flex justify-end">
-                  <Button type="button" onClick={handleNext}>
-                    Next
-                  </Button>
-                </div>
+                    <div className="flex justify-end">
+                      <Button type="button" onClick={handleNext}>
+                        Next
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Customize Tab */}
@@ -326,6 +342,15 @@ export default function CreateChatbotPage() {
                     className="h-10"
                   />
                 </div>
+
+               
+
+                <SizeCustomize
+                  width={formData.width}
+                  onWidthChange={(value) => setFormData({ ...formData, width: value })}
+                  height={formData.height}
+                  onHeightChange={(value) => setFormData({ ...formData, height: value })}
+                />
 
                 <div className="flex justify-between">
                   <Button type="button" variant="outline" onClick={handleBack}>
@@ -425,6 +450,11 @@ export default function CreateChatbotPage() {
                   chatbotId="preview"
                   name={formData.name}
                   websiteUrl={formData.websiteUrl}
+                  primaryColor={formData.primaryColor}
+                  bubbleMessage={formData.bubbleMessage}
+                  isDarkMode={formData.isDarkMode}
+                  width={formData.width}
+                  height={formData.height}
                 />
 
                 <div className="flex justify-between mt-6">

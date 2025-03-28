@@ -5,34 +5,30 @@ import { Button } from '@/components/ui/button';
 import { Check, Copy } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 
 interface EmbedCodeProps {
   chatbotId: string;
   name: string;
   websiteUrl: string;
-  logo?: string;
-  avatar?: string;
-  primaryColor?: string;
-  isDarkMode?: boolean;
-  welcomeMessage?: string;
+  primaryColor: string;
+  bubbleMessage: string;
+  isDarkMode: boolean;
+  width: number;
+  height: number;
 }
 
-export function EmbedCode({ 
-  chatbotId, 
-  name, 
+export function EmbedCode({
+  chatbotId,
+  name,
   websiteUrl,
-  logo,
-  avatar,
   primaryColor,
+  bubbleMessage,
   isDarkMode,
-  welcomeMessage
+  width,
+  height,
 }: EmbedCodeProps) {
   const { toast } = useToast();
   const [uuid] = useState(() => uuidv4());
-  const [width, setWidth] = useState(400);
-  const [height, setHeight] = useState(600);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -83,38 +79,6 @@ export function EmbedCode({
                     <span className="text-sm font-medium">Website URL</span>
                   </div>
                   <span className="text-sm text-muted-foreground">{websiteUrl}</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="width">Width (px)</Label>
-                    <span className="text-sm text-muted-foreground">{width}px</span>
-                  </div>
-                  <Slider
-                    id="width"
-                    min={300}
-                    max={800}
-                    step={10}
-                    value={[width]}
-                    onValueChange={(value: number[]) => setWidth(value[0])}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="height">Height (px)</Label>
-                    <span className="text-sm text-muted-foreground">{height}px</span>
-                  </div>
-                  <Slider
-                    id="height"
-                    min={400}
-                    max={800}
-                    step={10}
-                    value={[height]}
-                    onValueChange={(value: number[]) => setHeight(value[0])}
-                  />
                 </div>
               </div>
 
