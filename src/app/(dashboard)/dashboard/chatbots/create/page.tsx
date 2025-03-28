@@ -62,26 +62,33 @@ export default function CreateChatbotPage() {
     setIsLoading(true);
 
     try {
+      // Create FormData for the main request
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('websiteUrl', formData.websiteUrl);
       formDataToSend.append('primaryColor', formData.primaryColor);
       formDataToSend.append('bubbleMessage', formData.bubbleMessage);
-      formDataToSend.append('instructions', formData.instructions);
       formDataToSend.append('welcomeMessage', formData.welcomeMessage);
+      formDataToSend.append('instructions', formData.instructions);
       formDataToSend.append('isDarkMode', formData.isDarkMode.toString());
+      formDataToSend.append('width', formData.width.toString());
+      formDataToSend.append('height', formData.height.toString());
 
+      // Add logo and avatar if they exist
       if (formData.logo) {
         formDataToSend.append('logo', formData.logo);
       }
       if (formData.avatar) {
         formDataToSend.append('avatar', formData.avatar);
       }
+
+      // Add documents
       formData.documents.forEach((doc) => {
         formDataToSend.append('documents', doc);
       });
 
+      // Create chatbot with all data
       const response = await fetch('/api/chatbots', {
         method: 'POST',
         body: formDataToSend,
@@ -91,13 +98,47 @@ export default function CreateChatbotPage() {
         throw new Error('Failed to create chatbot');
       }
 
+      const data = await response.json();
+      const chatbotId = data.id;
+
+      // Handle website scraping if URL is provided
+      if (formData.websiteUrl) {
+        try {
+          const scrapeResponse = await fetch(`/api/chatbots/${chatbotId}/scrape`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url: formData.websiteUrl,
+            }),
+          });
+
+          if (!scrapeResponse.ok) {
+            console.warn('Website scraping failed:', await scrapeResponse.text());
+            toast({
+              title: 'Warning',
+              description: 'Chatbot created but website scraping failed. You can retry scraping later.',
+              variant: 'default',
+            });
+          }
+        } catch (scrapeError) {
+          console.warn('Website scraping error:', scrapeError);
+          toast({
+            title: 'Warning',
+            description: 'Chatbot created but website scraping failed. You can retry scraping later.',
+            variant: 'default',
+          });
+        }
+      }
+
       toast({
         title: 'Success!',
         description: 'Chatbot created successfully',
       });
 
-      // Redirect to chatbots list
-      router.push('/dashboard/chatbots');
+      // Navigate to Embed tab regardless of scraping status
+      setCurrentTab('embed');
     } catch (error) {
       console.error('Error creating chatbot:', error);
       toast({
@@ -464,8 +505,8 @@ export default function CreateChatbotPage() {
                       <Button type="button" variant="outline" onClick={handleBack}>
                         Back
                       </Button>
-                      <Button type="button" onClick={handleNext}>
-                        Next
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Creating...' : 'Save Chatbot'}
                       </Button>
                     </div>
                   </CardContent>
@@ -496,9 +537,6 @@ export default function CreateChatbotPage() {
                     <div className="flex justify-between">
                       <Button type="button" variant="outline" onClick={handleBack}>
                         Back
-                      </Button>
-                      <Button type="submit" disabled={isLoading}>
-                        {isLoading ? 'Creating...' : 'Save Chatbot'}
                       </Button>
                     </div>
                   </CardContent>
