@@ -182,6 +182,18 @@ async function initializeChatbot() {
       .message-content {
         flex: 1;
       }
+      .message-timestamp {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-top: 4px;
+        text-align: right;
+      }
+      .message.user .message-timestamp {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .message.assistant .message-timestamp {
+        color: ${config.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)'};
+      }
     `;
 
     const styleSheet = document.createElement('style');
@@ -276,18 +288,30 @@ async function initializeChatbot() {
       const messageElement = document.createElement('div');
       messageElement.className = `message ${type}`;
       
-      const contentElement = document.createElement('div');
-      contentElement.className = 'message-content';
-      contentElement.textContent = text;
+      const contentWrapper = document.createElement('div');
+      contentWrapper.className = 'message-content';
       
-      messageElement.appendChild(contentElement);
+      const textElement = document.createElement('div');
+      textElement.textContent = text;
+      
+      const timestampElement = document.createElement('div');
+      timestampElement.className = 'message-timestamp';
+      timestampElement.textContent = new Date().toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      
+      contentWrapper.appendChild(textElement);
+      contentWrapper.appendChild(timestampElement);
+      messageElement.appendChild(contentWrapper);
       
       if (avatarUrl && type === 'assistant') {
         const avatarElement = document.createElement('img');
         avatarElement.className = 'message-avatar';
         avatarElement.src = avatarUrl;
         avatarElement.alt = config.name;
-        messageElement.insertBefore(avatarElement, contentElement);
+        messageElement.insertBefore(avatarElement, contentWrapper);
       }
       
       messagesContainer.appendChild(messageElement);
