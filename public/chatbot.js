@@ -157,16 +157,30 @@ async function initializeChatbot() {
         padding: 12px 16px;
         border-radius: 12px;
         max-width: 80%;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
       }
       .message.user {
         align-self: flex-end;
         background-color: ${config.primaryColor || '#000000'};
         color: white;
+        flex-direction: row-reverse;
       }
       .message.assistant {
         align-self: flex-start;
         background-color: ${config.isDarkMode ? '#2d2d2d' : '#f3f4f6'};
         color: ${config.isDarkMode ? 'white' : 'black'};
+      }
+      .message-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .message-content {
+        flex: 1;
       }
     `;
 
@@ -202,42 +216,42 @@ async function initializeChatbot() {
       </div>
     `;
 
-    const chatbotContainer = document.createElement('div');
-    chatbotContainer.innerHTML = chatbotHTML;
-    document.body.appendChild(chatbotContainer);
+    const chatbotElement = document.createElement('div');
+    chatbotElement.innerHTML = chatbotHTML;
+    document.body.appendChild(chatbotElement);
 
-    // Add event listeners
-    const bubble = document.querySelector('.chatbot-bubble');
-    const container = document.querySelector('.chatbot-container');
-    const closeButton = document.querySelector('.chatbot-close');
-    const form = document.querySelector('.chatbot-input-container');
-    const input = document.querySelector('.chatbot-input');
-    const messages = document.querySelector('.chatbot-messages');
+    // Get references to elements
+    const bubble = chatbotElement.querySelector('.chatbot-bubble');
+    const container = chatbotElement.querySelector('.chatbot-container');
+    const closeButton = chatbotElement.querySelector('.chatbot-close');
+    const messagesContainer = chatbotElement.querySelector('.chatbot-messages');
+    const form = chatbotElement.querySelector('form');
+    const input = chatbotElement.querySelector('.chatbot-input');
 
+    // Toggle chatbot visibility
     bubble.addEventListener('click', () => {
-      container.style.display = container.style.display === 'none' ? 'flex' : 'none';
-      if (container.style.display === 'flex' && messages.children.length === 0) {
-        addMessage(config.welcomeMessage || 'Hello! How can I help you today?', 'assistant');
-      }
+      container.style.display = 'flex';
+      bubble.style.display = 'none';
     });
 
     closeButton.addEventListener('click', () => {
       container.style.display = 'none';
-      bubble.style.transform = 'none';
+      bubble.style.display = 'flex';
     });
 
+    // Handle form submission
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const message = input.value.trim();
       if (!message) return;
 
+      // Add user message
       addMessage(message, 'user');
       input.value = '';
 
       try {
-        const apiUrl = `${apiDomain}/api/chatbots/${config.uuid}/chat`;
-        console.log('Sending message to:', apiUrl);
-        const response = await fetch(apiUrl, {
+        // Send message to API
+        const response = await fetch(`${apiDomain}/api/chatbots/${uuid}/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -250,26 +264,46 @@ async function initializeChatbot() {
         }
 
         const data = await response.json();
-        addMessage(data.message, 'assistant');
+        addMessage(data.message, 'assistant', config.avatarUrl);
       } catch (error) {
         console.error('Error sending message:', error);
-        addMessage('Sorry, there was an error sending your message. Please try again.', 'assistant');
+        addMessage('Sorry, I encountered an error. Please try again.', 'assistant', config.avatarUrl);
       }
     });
 
-    function addMessage(content, type) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${type}`;
-      messageDiv.textContent = content;
-      messages.appendChild(messageDiv);
-      messages.scrollTop = messages.scrollHeight;
+    // Function to add a message to the chat
+    function addMessage(text, type, avatarUrl = null) {
+      const messageElement = document.createElement('div');
+      messageElement.className = `message ${type}`;
+      
+      const contentElement = document.createElement('div');
+      contentElement.className = 'message-content';
+      contentElement.textContent = text;
+      
+      messageElement.appendChild(contentElement);
+      
+      if (avatarUrl && type === 'assistant') {
+        const avatarElement = document.createElement('img');
+        avatarElement.className = 'message-avatar';
+        avatarElement.src = avatarUrl;
+        avatarElement.alt = config.name;
+        messageElement.insertBefore(avatarElement, contentElement);
+      }
+      
+      messagesContainer.appendChild(messageElement);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Add welcome message if configured
+    if (config.welcomeMessage) {
+      addMessage(config.welcomeMessage, 'assistant', config.avatarUrl);
     }
 
     // Scroll to bottom when new messages are added
     const observer = new MutationObserver(() => {
-      messages.scrollTop = messages.scrollHeight;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
-    observer.observe(messages, { childList: true, subtree: true });
+    observer.observe(messagesContainer, { childList: true, subtree: true });
 
   } catch (error) {
     console.error('Error initializing chatbot:', error);

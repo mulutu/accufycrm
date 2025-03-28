@@ -75,11 +75,12 @@ export async function GET(
       return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
-    // Format the logo URL with the application's base URL
+    // Format the logo and avatar URLs with the application's base URL
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const formattedChatbot = {
       ...chatbot,
       logoUrl: chatbot.logoUrl ? `${appUrl}${chatbot.logoUrl}` : null,
+      avatarUrl: chatbot.avatarUrl ? `${appUrl}${chatbot.avatarUrl}` : null,
     };
 
     // Create response with CORS headers
