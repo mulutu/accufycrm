@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { prisma } from "@/lib/prisma";
 import crypto from 'crypto';
 
@@ -9,11 +7,6 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { message } = await request.json();
     
     if (!message) {
@@ -55,7 +48,7 @@ export async function POST(
     // Generate a unique session ID
     const sessionId = crypto.randomUUID();
 
-    // Save the conversation
+    // Save the conversation without user ID for public access
     await prisma.conversation.create({
       data: {
         sessionId,
@@ -65,13 +58,11 @@ export async function POST(
             {
               content: message,
               role: 'user',
-              userId: session.user.id,
               chatbotId: chatbot.id,
             },
             {
               content: response.message,
               role: 'assistant',
-              userId: session.user.id,
               chatbotId: chatbot.id,
             },
           ],
