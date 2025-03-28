@@ -17,8 +17,7 @@ const updateChatbotSchema = z.object({
 function addCorsHeaders(response: NextResponse) {
   response.headers.set('Access-Control-Allow-Origin', '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
-  response.headers.set('Access-Control-Max-Age', '86400'); // 24 hours
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   return response;
 }
 
@@ -34,19 +33,15 @@ export async function GET(
       },
       select: {
         id: true,
-        uuid: true,
         name: true,
-        description: true,
-        logoUrl: true,
-        avatarUrl: true,
-        websiteUrl: true,
         primaryColor: true,
-        bubbleMessage: true,
-        welcomeMessage: true,
-        instructions: true,
         isDarkMode: true,
         width: true,
         height: true,
+        logoUrl: true,
+        avatarUrl: true,
+        bubbleMessage: true,
+        welcomeMessage: true,
       },
     });
 
@@ -58,25 +53,24 @@ export async function GET(
         },
         select: {
           id: true,
-          uuid: true,
           name: true,
-          description: true,
-          logoUrl: true,
-          avatarUrl: true,
-          websiteUrl: true,
           primaryColor: true,
-          bubbleMessage: true,
-          welcomeMessage: true,
-          instructions: true,
           isDarkMode: true,
           width: true,
           height: true,
+          logoUrl: true,
+          avatarUrl: true,
+          bubbleMessage: true,
+          welcomeMessage: true,
         },
       });
     }
 
     if (!chatbot) {
-      return new NextResponse('Chatbot not found', { status: 404 });
+      return addCorsHeaders(NextResponse.json(
+        { error: 'Chatbot not found' },
+        { status: 404 }
+      ));
     }
 
     // Format the logo and avatar URLs with the application's base URL
@@ -87,10 +81,13 @@ export async function GET(
       avatarUrl: chatbot.avatarUrl ? `${appUrl}${chatbot.avatarUrl}` : null,
     };
 
-    return NextResponse.json(formattedChatbot);
+    return addCorsHeaders(NextResponse.json(formattedChatbot));
   } catch (error) {
     console.error('Error fetching chatbot:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return addCorsHeaders(NextResponse.json(
+      { error: 'Failed to fetch chatbot' },
+      { status: 500 }
+    ));
   }
 }
 

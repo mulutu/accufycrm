@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import crypto from 'crypto';
-import { queryChatbot } from '@/lib/rag/query';
+import prisma from "@/lib/prisma";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import crypto from "crypto";
 
 // Helper function to add CORS headers
 function addCorsHeaders(response: NextResponse) {
@@ -12,63 +12,97 @@ function addCorsHeaders(response: NextResponse) {
 }
 
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { message } = await req.json();
+    const { message } = await request.json();
+    console.log('Received request for chatbot:', params.id);
+    console.log('Message:', message);
 
-    // Get the chatbot
-    const chatbot = await prisma.chatbot.findUnique({
+    // Try to find chatbot by ID first
+    let chatbot = await prisma.chatbot.findFirst({
       where: { id: params.id },
+      include: {
+        documents: true,
+      },
     });
 
+    // If not found by ID, try UUID
     if (!chatbot) {
-      return addCorsHeaders(new NextResponse('Chatbot not found', { status: 404 }));
+      chatbot = await prisma.chatbot.findFirst({
+        where: { uuid: params.id },
+        include: {
+          documents: true,
+        },
+      });
     }
 
-    // Get or create conversation
-    const conversation = await prisma.conversation.create({
+    if (!chatbot) {
+      console.error('Chatbot not found:', params.id);
+      return addCorsHeaders(NextResponse.json(
+        { error: 'Chatbot not found' },
+        { status: 404 }
+      ));
+    }
+
+    console.log('Found chatbot with', chatbot.documents.length, 'documents');
+
+    // Get relevant documents for context
+    const documents = await prisma.document.findMany({
+      where: {
+        chatbotId: chatbot.id,
+      },
+      take: 5, // Limit to 5 most relevant documents
+    });
+
+    // Prepare context from documents
+    const context = documents
+      .map(doc => doc.content)
+      .join('\n\n')
+      .slice(0, 1000); // Limit context length
+
+    console.log('Context length:', context.length);
+
+    // Initialize Gemini AI
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+
+    // Generate response
+    const prompt = `Context: ${context}\n\nUser: ${message}\n\nAssistant:`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Store the conversation
+    await prisma.conversation.create({
       data: {
+        chatbotId: chatbot.id,
         sessionId: crypto.randomUUID(),
-        chatbotId: params.id,
-        userIp: req.headers.get('x-forwarded-for') || 'unknown',
-        country: req.headers.get('cf-ipcountry') || 'unknown',
-        device: req.headers.get('user-agent') || 'unknown',
-        browser: req.headers.get('sec-ch-ua') || 'unknown',
+        messages: {
+          create: [
+            {
+              content: message,
+              role: 'user',
+              chatbotId: chatbot.id,
+            },
+            {
+              content: text,
+              role: 'assistant',
+              chatbotId: chatbot.id,
+            },
+          ],
+        },
       },
     });
 
-    // Save user message
-    await prisma.message.create({
-      data: {
-        content: message,
-        role: 'user',
-        chatbotId: params.id,
-        conversationId: conversation.id,
-      },
-    });
-
-    // Get response using RAG
-    const response = await queryChatbot(chatbot.id, message);
-
-    // Save assistant message
-    await prisma.message.create({
-      data: {
-        content: response.message,
-        role: 'assistant',
-        chatbotId: params.id,
-        conversationId: conversation.id,
-      },
-    });
-
-    return addCorsHeaders(NextResponse.json({
-      message: response.message,
-      sources: response.sources,
-    }));
+    return addCorsHeaders(NextResponse.json({ response: text }));
   } catch (error) {
     console.error('Error processing chat message:', error);
-    return addCorsHeaders(new NextResponse('Internal Server Error', { status: 500 }));
+    return addCorsHeaders(NextResponse.json(
+      { error: 'Failed to process chat message' },
+      { status: 500 }
+    ));
   }
 }
 

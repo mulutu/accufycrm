@@ -69,7 +69,7 @@ model VerificationToken {
 
 model Chatbot {
   id            String         @id @default(cuid())
-  uuid          String         @unique @default(uuid())
+  convexId      String         @unique
   name          String
   description   String?
   logoUrl       String?
