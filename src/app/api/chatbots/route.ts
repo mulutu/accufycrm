@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { scrapeWebsite } from '@/lib/scraper';
 import { uploadFile } from '@/lib/storage';
 import { Session } from 'next-auth';
+import crypto from 'crypto';
 
 interface BlobWithName extends Blob {
   name?: string;
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
         width,
         height,
         userId: session.user.id,
+        uuid: crypto.randomUUID(),
       },
     });
 

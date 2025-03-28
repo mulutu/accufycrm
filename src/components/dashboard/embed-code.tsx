@@ -3,7 +3,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Check, Copy } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { v4 as uuidv4 } from 'uuid';
 
 interface EmbedCodeProps {
   chatbotId: string;
@@ -27,14 +26,13 @@ export function EmbedCode({
   height,
 }: EmbedCodeProps) {
   const { toast } = useToast();
-  const [uuid] = useState(() => uuidv4());
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const embedCode = `<script 
   defer 
   src="${appUrl}/vendor/chatbot/js/external-chatbot.js" 
-  data-chatbot-uuid="${uuid}" 
+  data-chatbot-uuid="${chatbotId}" 
   data-iframe-width="${width}" 
   data-iframe-height="${height}" >
 </script>`;
