@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from '@clerk/nextjs';
 import { prisma } from "@/lib/prisma";
 import crypto from 'crypto';
 import { queryChatbot } from '@/lib/rag/query';
@@ -17,11 +16,6 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = auth();
-    if (!userId) {
-      return addCorsHeaders(new NextResponse('Unauthorized', { status: 401 }));
-    }
-
     const { message } = await req.json();
 
     // Get the chatbot
@@ -31,11 +25,6 @@ export async function POST(
 
     if (!chatbot) {
       return addCorsHeaders(new NextResponse('Chatbot not found', { status: 404 }));
-    }
-
-    // Check if chatbot is ready
-    if (chatbot.status !== 'READY') {
-      return addCorsHeaders(new NextResponse('Chatbot is not ready yet', { status: 400 }));
     }
 
     // Get or create conversation
@@ -57,7 +46,6 @@ export async function POST(
         role: 'user',
         chatbotId: params.id,
         conversationId: conversation.id,
-        userId,
       },
     });
 

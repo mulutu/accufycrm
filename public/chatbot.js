@@ -26,16 +26,25 @@ async function initializeChatbot() {
   }
 
   try {
-    // Get the API domain from the script's src attribute
-    const scriptSrc = script.src;
-    const apiDomain = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
+    // Get the API domain from data attribute or use default
+    const apiDomain = script.getAttribute('data-api-domain') || 'http://localhost:3000';
     console.log('Using API domain:', apiDomain);
 
     // Fetch chatbot configuration from the API
-    const response = await fetch(`${apiDomain}/api/chatbots/${uuid}`);
+    const response = await fetch(`${apiDomain}/api/chatbots/${uuid}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
     if (!response.ok) {
-      throw new Error('Failed to fetch chatbot configuration');
+      throw new Error(`Failed to fetch chatbot configuration: ${response.status}`);
     }
+
     const config = await response.json();
     console.log('Fetched chatbot config:', config);
 
@@ -283,12 +292,15 @@ async function initializeChatbot() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify({ message }),
+          mode: 'cors',
+          credentials: 'omit',
         });
 
         if (!response.ok) {
-          throw new Error('Failed to send message');
+          throw new Error(`Failed to send message: ${response.status}`);
         }
 
         const data = await response.json();

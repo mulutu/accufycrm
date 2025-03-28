@@ -13,13 +13,20 @@ const updateChatbotSchema = z.object({
   welcomeMessage: z.string().optional(),
 });
 
+// Helper function to add CORS headers
+function addCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+  response.headers.set('Access-Control-Max-Age', '86400'); // 24 hours
+  return response;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('Fetching chatbot with ID/UUID:', params.id);
-    
     // Try to find by ID first
     let chatbot = await prisma.chatbot.findFirst({
       where: {
@@ -68,11 +75,8 @@ export async function GET(
       });
     }
 
-    console.log('Found chatbot:', chatbot);
-
     if (!chatbot) {
-      console.log('Chatbot not found');
-      return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
+      return new NextResponse('Chatbot not found', { status: 404 });
     }
 
     // Format the logo and avatar URLs with the application's base URL
@@ -83,32 +87,16 @@ export async function GET(
       avatarUrl: chatbot.avatarUrl ? `${appUrl}${chatbot.avatarUrl}` : null,
     };
 
-    // Create response with CORS headers
-    const response = NextResponse.json(formattedChatbot);
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-    return response;
+    return NextResponse.json(formattedChatbot);
   } catch (error) {
     console.error('Error fetching chatbot:', error);
-    const response = NextResponse.json(
-      { error: 'Failed to fetch chatbot configuration' },
-      { status: 500 }
-    );
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-    return response;
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
 // Handle OPTIONS request for CORS preflight
 export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 });
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-  return response;
+  return addCorsHeaders(new NextResponse(null, { status: 200 }));
 }
 
 export async function PUT(
