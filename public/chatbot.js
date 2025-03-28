@@ -122,6 +122,21 @@ async function initializeChatbot() {
         border-top: 1px solid ${config.isDarkMode ? '#333' : '#e5e7eb'};
         margin-top: auto;
       }
+      .chatbot-footer {
+        padding: 8px 16px;
+        text-align: center;
+        font-size: 12px;
+        color: ${config.isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'};
+        border-top: 1px solid ${config.isDarkMode ? '#333' : '#e5e7eb'};
+      }
+      .chatbot-footer a {
+        color: ${config.primaryColor || '#000000'};
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .chatbot-footer a:hover {
+        text-decoration: underline;
+      }
       .chatbot-input-wrapper {
         display: flex;
         gap: 8px;
@@ -224,6 +239,9 @@ async function initializeChatbot() {
               <button type="submit" class="chatbot-send">Send</button>
             </div>
           </form>
+          <div class="chatbot-footer">
+            Powered by <a href="https://accufycrm.com" target="_blank" rel="noopener noreferrer">AccufyCRM.com</a>
+          </div>
         </div>
       </div>
     `;
@@ -242,13 +260,11 @@ async function initializeChatbot() {
 
     // Toggle chatbot visibility
     bubble.addEventListener('click', () => {
-      container.style.display = 'flex';
-      bubble.style.display = 'none';
+      container.style.display = container.style.display === 'none' ? 'flex' : 'none';
     });
 
     closeButton.addEventListener('click', () => {
       container.style.display = 'none';
-      bubble.style.display = 'flex';
     });
 
     // Handle form submission
