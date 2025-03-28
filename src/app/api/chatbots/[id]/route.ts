@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -16,42 +16,31 @@ const updateChatbotSchema = z.object({
 });
 
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const chatbot = await prisma.chatbot.findUnique({
+    const chatbot = await prisma.chatbot.findFirst({
       where: {
         id: params.id,
         userId: session.user.id,
       },
-      include: {
-        dataSources: true,
-      },
     });
 
     if (!chatbot) {
-      return NextResponse.json(
-        { message: "Chatbot not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
     return NextResponse.json(chatbot);
   } catch (error) {
-    console.error("Error fetching chatbot:", error);
-
+    console.error('Error fetching chatbot:', error);
     return NextResponse.json(
-      { message: "Something went wrong" },
+      { error: 'Failed to fetch chatbot' },
       { status: 500 }
     );
   }
