@@ -1,125 +1,90 @@
 import { NextResponse } from "next/server";
+import { auth } from '@clerk/nextjs';
 import { prisma } from "@/lib/prisma";
 import crypto from 'crypto';
+import { queryChatbot } from '@/lib/rag/query';
+
+// Helper function to add CORS headers
+function addCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return response;
+}
 
 export async function POST(
-  request: Request,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { message } = await request.json();
-    
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    const { userId } = auth();
+    if (!userId) {
+      return addCorsHeaders(new NextResponse('Unauthorized', { status: 401 }));
     }
 
-    // Try to find by ID first
-    let chatbot = await prisma.chatbot.findFirst({
-      where: {
-        id: params.id,
-      },
-      include: {
-        knowledgeBase: true,
-        user: true,
-      },
+    const { message } = await req.json();
+
+    // Get the chatbot
+    const chatbot = await prisma.chatbot.findUnique({
+      where: { id: params.id },
     });
 
-    // If not found by ID, try UUID
     if (!chatbot) {
-      chatbot = await prisma.chatbot.findFirst({
-        where: {
-          uuid: params.id,
-        },
-        include: {
-          knowledgeBase: true,
-          user: true,
-        },
-      });
+      return addCorsHeaders(new NextResponse('Chatbot not found', { status: 404 }));
     }
 
-    if (!chatbot) {
-      return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
+    // Check if chatbot is ready
+    if (chatbot.status !== 'READY') {
+      return addCorsHeaders(new NextResponse('Chatbot is not ready yet', { status: 400 }));
     }
 
-    // TODO: Implement actual chat logic using the knowledge base
-    // For now, return a simple response
-    const response = {
-      message: `I received your message: "${message}". This is a placeholder response. The actual chat functionality will be implemented using the chatbot's knowledge base.`,
-    };
-
-    // Generate a unique session ID
-    const sessionId = crypto.randomUUID();
-
-    // Save the conversation with the chatbot owner's user ID
-    await prisma.conversation.create({
+    // Get or create conversation
+    const conversation = await prisma.conversation.create({
       data: {
-        sessionId,
-        chatbot: {
-          connect: {
-            id: chatbot.id
-          }
-        },
-        messages: {
-          create: [
-            {
-              content: message,
-              role: 'user',
-              chatbot: {
-                connect: {
-                  id: chatbot.id
-                }
-              },
-              user: chatbot.user ? {
-                connect: {
-                  id: chatbot.user.id
-                }
-              } : undefined
-            },
-            {
-              content: response.message,
-              role: 'assistant',
-              chatbot: {
-                connect: {
-                  id: chatbot.id
-                }
-              },
-              user: chatbot.user ? {
-                connect: {
-                  id: chatbot.user.id
-                }
-              } : undefined
-            },
-          ],
-        },
+        sessionId: crypto.randomUUID(),
+        chatbotId: params.id,
+        userIp: req.headers.get('x-forwarded-for') || 'unknown',
+        country: req.headers.get('cf-ipcountry') || 'unknown',
+        device: req.headers.get('user-agent') || 'unknown',
+        browser: req.headers.get('sec-ch-ua') || 'unknown',
       },
     });
 
-    // Add CORS headers
-    const nextResponse = NextResponse.json(response);
-    nextResponse.headers.set('Access-Control-Allow-Origin', '*');
-    nextResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    nextResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-    return nextResponse;
+    // Save user message
+    await prisma.message.create({
+      data: {
+        content: message,
+        role: 'user',
+        chatbotId: params.id,
+        conversationId: conversation.id,
+        userId,
+      },
+    });
+
+    // Get response using RAG
+    const response = await queryChatbot(chatbot.id, message);
+
+    // Save assistant message
+    await prisma.message.create({
+      data: {
+        content: response.message,
+        role: 'assistant',
+        chatbotId: params.id,
+        conversationId: conversation.id,
+      },
+    });
+
+    return addCorsHeaders(NextResponse.json({
+      message: response.message,
+      sources: response.sources,
+    }));
   } catch (error) {
     console.error('Error processing chat message:', error);
-    const response = NextResponse.json(
-      { error: 'Failed to process message' },
-      { status: 500 }
-    );
-    
-    // Add CORS headers
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-    return response;
+    return addCorsHeaders(new NextResponse('Internal Server Error', { status: 500 }));
   }
 }
 
 // Handle OPTIONS request for CORS preflight
 export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 });
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-  return response;
+  return addCorsHeaders(new NextResponse(null, { status: 200 }));
 } 

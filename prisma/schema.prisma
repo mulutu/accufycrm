@@ -82,6 +82,7 @@ model Chatbot {
   isDarkMode    Boolean        @default(false)
   width         Int            @default(400)
   height        Int            @default(600)
+  status        String         @default("IDLE") // IDLE, TRAINING, TRAINING_FAILED, READY
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages      Message[]

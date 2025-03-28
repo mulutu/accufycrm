@@ -14,23 +14,16 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
 // Initialize Convex client
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || '');
 
-interface ChunkMetadata {
-  source: string;
-  type: 'website' | 'document';
-  url?: string;
-  filename?: string;
-}
-
-interface Chunk {
-  content: string;
-  metadata: ChunkMetadata;
-}
-
 interface QueryResult {
   message: string;
   sources: {
     content: string;
-    metadata: ChunkMetadata;
+    metadata: {
+      source: string;
+      type: 'website' | 'document';
+      url?: string;
+      filename?: string;
+    };
   }[];
 }
 
@@ -44,11 +37,11 @@ export async function queryChatbot(chatbotId: string, query: string): Promise<Qu
       chatbotId,
       embedding: queryEmbedding,
       limit: 5,
-    }) as Chunk[];
+    });
     
     // Prepare context from relevant chunks
     const context = chunks
-      .map((chunk: Chunk) => chunk.content)
+      .map(chunk => chunk.content)
       .join('\n\n');
     
     // Generate response using Gemini
@@ -58,7 +51,7 @@ export async function queryChatbot(chatbotId: string, query: string): Promise<Qu
     
     return {
       message: response,
-      sources: chunks.map((chunk: Chunk) => ({
+      sources: chunks.map(chunk => ({
         content: chunk.content,
         metadata: chunk.metadata,
       })),

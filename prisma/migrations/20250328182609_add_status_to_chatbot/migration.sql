@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `chatbot` ADD COLUMN `status` VARCHAR(191) NOT NULL DEFAULT 'IDLE';
