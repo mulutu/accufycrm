@@ -544,8 +544,18 @@ export default function CreateChatbotPage() {
                     )}
 
                     <div className="flex justify-between">
-                      <Button type="button" variant="outline" onClick={handleBack}>
-                        Back
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => window.location.href = '/dashboard/chatbots/create'}
+                      >
+                        Create New Chatbot
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={() => window.location.href = '/dashboard/chatbots'}
+                      >
+                        View My Chatbots
                       </Button>
                     </div>
                   </CardContent>
