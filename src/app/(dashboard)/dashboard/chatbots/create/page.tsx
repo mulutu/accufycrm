@@ -309,162 +309,199 @@ export default function CreateChatbotPage() {
               </TabsContent>
 
               {/* Customize Tab */}
-              <TabsContent value="customize" className="space-y-4">
-                <FileUpload
-                  label="Logo"
-                  value={formData.logoUrl}
-                  onChange={handleLogoChange}
-                  accept="image/*"
-                  maxSize={5242880} // 5MB
-                />
+              <TabsContent value="customize">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Customize Appearance</CardTitle>
+                    <CardDescription>
+                      Customize the look and feel of your chatbot
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FileUpload
+                      label="Logo"
+                      value={formData.logoUrl}
+                      onChange={handleLogoChange}
+                      accept="image/*"
+                      maxSize={5242880} // 5MB
+                    />
 
-                <div>                  
-                  <FileUpload
-                    label="Avatar"                    
-                    value={formData.avatarUrl}
-                    onChange={handleAvatarChange}
-                    accept="image/*"
-                    maxSize={5242880} // 5MB
-                  />
-                </div>
+                    <div>                  
+                      <FileUpload
+                        label="Avatar"                    
+                        value={formData.avatarUrl}
+                        onChange={handleAvatarChange}
+                        accept="image/*"
+                        maxSize={5242880} // 5MB
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Choose a color that represents your brand.
-                  </p>
-                  <Input
-                    id="primaryColor"
-                    name="primaryColor"
-                    type="color"
-                    value={formData.primaryColor}
-                    onChange={handleChange}
-                    className="h-10"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="primaryColor">Primary Color</Label>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Choose a color that represents your brand.
+                      </p>
+                      <Input
+                        id="primaryColor"
+                        name="primaryColor"
+                        type="color"
+                        value={formData.primaryColor}
+                        onChange={handleChange}
+                        className="h-10"
+                      />
+                    </div>
 
-               
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="darkMode"
+                        name="isDarkMode"
+                        checked={formData.isDarkMode}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isDarkMode: checked })}
+                      />
+                      <Label htmlFor="darkMode">Dark Mode</Label>
+                    </div>
 
-                <SizeCustomize
-                  width={formData.width}
-                  onWidthChange={(value) => setFormData({ ...formData, width: value })}
-                  height={formData.height}
-                  onHeightChange={(value) => setFormData({ ...formData, height: value })}
-                />
+                    <SizeCustomize
+                      width={formData.width}
+                      onWidthChange={(value) => setFormData({ ...formData, width: value })}
+                      height={formData.height}
+                      onHeightChange={(value) => setFormData({ ...formData, height: value })}
+                    />
 
-                <div className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={handleBack}>
-                    Back
-                  </Button>
-                  <Button type="button" onClick={handleNext}>
-                    Next
-                  </Button>
-                </div>
+                    <div className="flex justify-between">
+                      <Button type="button" variant="outline" onClick={handleBack}>
+                        Back
+                      </Button>
+                      <Button type="button" onClick={handleNext}>
+                        Next
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Train Tab */}
-              <TabsContent value="train" className="space-y-4">
-                <div>
-                  <Label htmlFor="websiteUrl">Website URL</Label>
-                  <Input
-                    id="websiteUrl"
-                    name="websiteUrl"
-                    type="url"
-                    value={formData.websiteUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com"
-                  />
-                </div>
-
+              <TabsContent value="train">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upload Documents (Q&As, FAQs, Product Info, etc.)</CardTitle>
+                    <CardTitle>Train Your Chatbot</CardTitle>
                     <CardDescription>
-                      Upload PDF, DOC, DOCX, or TXT files to train your chatbot
+                      Add knowledge to your chatbot by scraping a website or uploading documents
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div
-                      className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      onClick={() => document.getElementById('document-upload')?.click()}
-                    >
-                      <input
-                        id="document-upload"
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,.txt"
-                        className="hidden"
-                        onChange={handleFileSelect}
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="websiteUrl">Website URL</Label>
+                      <Input
+                        id="websiteUrl"
+                        name="websiteUrl"
+                        type="url"
+                        value={formData.websiteUrl}
+                        onChange={handleChange}
+                        placeholder="https://example.com"
                       />
-                      <p className="text-gray-500">Drag and drop files here</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        or click to select files
+                      <p className="text-sm text-gray-500 mt-1">
+                        Enter a website URL to scrape content from
                       </p>
                     </div>
 
-                    {formData.documents.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <h4 className="font-medium">Uploaded Documents:</h4>
-                        <div className="space-y-2">
-                          {formData.documents.map((file, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                            >
-                              <span className="text-sm">{file.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    documents: prev.documents.filter((_, i) => i !== index)
-                                  }));
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                    <div>
+                      <Label>Upload Documents</Label>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Upload PDF, DOC, DOCX, or TXT files to train your chatbot
+                      </p>
+                      <div
+                        className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors mt-2"
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onClick={() => document.getElementById('document-upload')?.click()}
+                      >
+                        <input
+                          id="document-upload"
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.txt"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
+                        <p className="text-gray-500">Drag and drop files here</p>
+                        <p className="text-sm text-gray-400 mt-2">
+                          or click to select files
+                        </p>
                       </div>
-                    )}
+
+                      {formData.documents.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <h4 className="font-medium">Uploaded Documents:</h4>
+                          <div className="space-y-2">
+                            {formData.documents.map((file, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                              >
+                                <span className="text-sm">{file.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      documents: prev.documents.filter((_, i) => i !== index)
+                                    }));
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button type="button" variant="outline" onClick={handleBack}>
+                        Back
+                      </Button>
+                      <Button type="button" onClick={handleNext}>
+                        Next
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
-
-                <div className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={handleBack}>
-                    Back
-                  </Button>
-                  <Button type="button" onClick={handleNext}>
-                    Next
-                  </Button>
-                </div>
               </TabsContent>
 
               {/* Embed Tab */}
               <TabsContent value="embed">
-                <EmbedCode
-                  chatbotId="preview"
-                  name={formData.name}
-                  websiteUrl={formData.websiteUrl}
-                  primaryColor={formData.primaryColor}
-                  bubbleMessage={formData.bubbleMessage}
-                  isDarkMode={formData.isDarkMode}
-                  width={formData.width}
-                  height={formData.height}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Embed Your Chatbot</CardTitle>
+                    <CardDescription>
+                      Get the code to embed your chatbot on your website
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <EmbedCode
+                      chatbotId="preview"
+                      name={formData.name}
+                      websiteUrl={formData.websiteUrl}
+                      primaryColor={formData.primaryColor}
+                      bubbleMessage={formData.bubbleMessage}
+                      isDarkMode={formData.isDarkMode}
+                      width={formData.width}
+                      height={formData.height}
+                    />
 
-                <div className="flex justify-between mt-6">
-                  <Button type="button" variant="outline" onClick={handleBack}>
-                    Back
-                  </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Creating...' : 'Save Chatbot'}
-                  </Button>
-                </div>
+                    <div className="flex justify-between">
+                      <Button type="button" variant="outline" onClick={handleBack}>
+                        Back
+                      </Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Creating...' : 'Save Chatbot'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </form>
