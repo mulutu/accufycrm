@@ -20,30 +20,87 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const chatbot = await prisma.chatbot.findFirst({
+    console.log('Fetching chatbot with ID/UUID:', params.id);
+    
+    // Try to find by ID first
+    let chatbot = await prisma.chatbot.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+      },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        description: true,
+        logoUrl: true,
+        avatarUrl: true,
+        primaryColor: true,
+        bubbleMessage: true,
+        welcomeMessage: true,
+        instructions: true,
+        isDarkMode: true,
+        width: true,
+        height: true,
       },
     });
 
+    // If not found by ID, try UUID
     if (!chatbot) {
+      chatbot = await prisma.chatbot.findFirst({
+        where: {
+          uuid: params.id,
+        },
+        select: {
+          id: true,
+          uuid: true,
+          name: true,
+          description: true,
+          logoUrl: true,
+          avatarUrl: true,
+          primaryColor: true,
+          bubbleMessage: true,
+          welcomeMessage: true,
+          instructions: true,
+          isDarkMode: true,
+          width: true,
+          height: true,
+        },
+      });
+    }
+
+    console.log('Found chatbot:', chatbot);
+
+    if (!chatbot) {
+      console.log('Chatbot not found');
       return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
-    return NextResponse.json(chatbot);
+    // Create response with CORS headers
+    const response = NextResponse.json(chatbot);
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return response;
   } catch (error) {
     console.error('Error fetching chatbot:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch chatbot' },
+    const response = NextResponse.json(
+      { error: 'Failed to fetch chatbot configuration' },
       { status: 500 }
     );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return response;
   }
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 }
 
 export async function PUT(

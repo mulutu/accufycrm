@@ -4,46 +4,95 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const chatbot = await prisma.chatbot.findFirst({
+    console.log('Generating embed script for ID/UUID:', params.id);
+    
+    // Try to find by ID first
+    let chatbot = await prisma.chatbot.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+      },
+      select: {
+        id: true,
+        uuid: true,
+        name: true,
+        description: true,
+        logoUrl: true,
+        avatarUrl: true,
+        primaryColor: true,
+        bubbleMessage: true,
+        welcomeMessage: true,
+        instructions: true,
+        isDarkMode: true,
+        width: true,
+        height: true,
       },
     });
 
+    // If not found by ID, try UUID
     if (!chatbot) {
+      chatbot = await prisma.chatbot.findFirst({
+        where: {
+          uuid: params.id,
+        },
+        select: {
+          id: true,
+          uuid: true,
+          name: true,
+          description: true,
+          logoUrl: true,
+          avatarUrl: true,
+          primaryColor: true,
+          bubbleMessage: true,
+          welcomeMessage: true,
+          instructions: true,
+          isDarkMode: true,
+          width: true,
+          height: true,
+        },
+      });
+    }
+
+    console.log('Found chatbot:', chatbot);
+
+    if (!chatbot) {
+      console.log('Chatbot not found');
       return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
-    // Generate the embed code
-    const embedCode = `
-<!-- AI Chat CRM Widget -->
-<script>
-  window.AI_CHAT_CRM_CONFIG = {
-    chatbotId: "${chatbot.id}",
-    name: "${chatbot.name}",
-    logoUrl: "${chatbot.logoUrl || ''}",
-    avatarUrl: "${chatbot.avatarUrl || ''}",
-    theme: "light"
-  };
-</script>
-<script src="${process.env.NEXTAUTH_URL}/widget.js"></script>
-`;
+    const embedScript = `
+      <script>
+        window.CHATBOT_CONFIG = ${JSON.stringify({
+          id: chatbot.id,
+          uuid: chatbot.uuid,
+          name: chatbot.name,
+          description: chatbot.description,
+          logoUrl: chatbot.logoUrl,
+          avatarUrl: chatbot.avatarUrl,
+          primaryColor: chatbot.primaryColor,
+          bubbleMessage: chatbot.bubbleMessage,
+          welcomeMessage: chatbot.welcomeMessage,
+          instructions: chatbot.instructions,
+          isDarkMode: chatbot.isDarkMode,
+          width: chatbot.width,
+          height: chatbot.height,
+        })};
+      </script>
+      <script src="/chatbot.js"></script>
+    `;
 
-    return NextResponse.json({ embedCode });
+    return new NextResponse(embedScript, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
   } catch (error) {
-    console.error('Error generating embed code:', error);
+    console.error('Error generating embed script:', error);
     return NextResponse.json(
-      { error: 'Failed to generate embed code' },
+      { error: 'Failed to generate embed script' },
       { status: 500 }
     );
   }

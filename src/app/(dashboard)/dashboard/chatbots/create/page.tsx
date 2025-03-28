@@ -571,6 +571,7 @@ export default function CreateChatbotPage() {
                         isDarkMode={formData.isDarkMode}
                         width={formData.width}
                         height={formData.height}
+                        apiUrl={`/api/chatbots/${chatbotUuid}`}
                       />
                     ) : (
                       <div className="text-center py-4">
