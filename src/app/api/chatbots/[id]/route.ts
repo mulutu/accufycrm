@@ -75,8 +75,15 @@ export async function GET(
       return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
+    // Format the logo URL with the application's base URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const formattedChatbot = {
+      ...chatbot,
+      logoUrl: chatbot.logoUrl ? `${appUrl}${chatbot.logoUrl}` : null,
+    };
+
     // Create response with CORS headers
-    const response = NextResponse.json(chatbot);
+    const response = NextResponse.json(formattedChatbot);
     response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
