@@ -154,9 +154,44 @@ export default function CreateChatbotPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Check website URL if it's being changed
+    if (name === 'websiteUrl' && value) {
+      try {
+        const response = await fetch('/api/chatbots/check-website', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: value }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to check website');
+        }
+
+        const data = await response.json();
+        if (data.exists) {
+          toast({
+            title: 'Website Already Configured',
+            description: `This website is already associated with the chatbot "${data.chatbot.name}". Each website can only be linked to one chatbot.`,
+            variant: 'destructive',
+          });
+          // Clear the website URL
+          setFormData((prev) => ({ ...prev, websiteUrl: '' }));
+        }
+      } catch (error) {
+        console.error('Error checking website:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to check website URL. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }
   };
 
   const handleLogoChange = (file: File | null) => {
