@@ -40,15 +40,15 @@ export default function CreateChatbotPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState('configure');
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    description: '',
+    name: 'MagicBot',
+    description: 'A chatbot that can help you with your questions',
     logo: null,
     logoUrl: '',
     avatar: null,
     avatarUrl: '',
     websiteUrl: '',
     primaryColor: '#000000',
-    bubbleMessage: 'Chat with us!',
+    bubbleMessage: 'Hi! 👋 Click me to start chatting',
     instructions: '',
     welcomeMessage: 'Hello! I\'m your AI assistant. How can I help you today?',
     documents: [],
@@ -255,6 +255,7 @@ export default function CreateChatbotPage() {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
+                        placeholder="Enter the name of the Chatbot e.g. MagicBot..."
                         required
                       />
                     </div>
@@ -294,7 +295,7 @@ export default function CreateChatbotPage() {
                         name="instructions"
                         value={formData.instructions}
                         onChange={handleChange}
-                        placeholder="Enter instructions for how the chatbot should behave..."
+                        placeholder="Explain the role of the chatbot and how it should behave..."
                         className="min-h-[100px]"
                       />
                     </div>
