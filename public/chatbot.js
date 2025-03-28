@@ -46,12 +46,13 @@ async function initializeChatbot() {
         bottom: 20px;
         right: 20px;
         z-index: 1000;
+        font-family: system-ui, -apple-system, sans-serif;
       }
       .chatbot-bubble {
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background-color: ${config.primaryColor};
+        background-color: ${config.primaryColor || '#000000'};
         color: white;
         display: flex;
         align-items: center;
@@ -64,7 +65,7 @@ async function initializeChatbot() {
         position: absolute;
         bottom: 70px;
         right: 0;
-        background: ${config.primaryColor};
+        background: ${config.primaryColor || '#000000'};
         color: white;
         padding: 8px 12px;
         border-radius: 8px;
@@ -80,9 +81,9 @@ async function initializeChatbot() {
         position: fixed;
         bottom: 90px;
         right: 20px;
-        width: ${config.width}px;
-        height: ${config.height}px;
-        background: white;
+        width: ${config.width || 400}px;
+        height: ${config.height || 600}px;
+        background: ${config.isDarkMode ? '#1a1a1a' : 'white'};
         border-radius: 10px;
         box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         display: none;
@@ -90,30 +91,39 @@ async function initializeChatbot() {
       }
       .chatbot-header {
         padding: 15px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid ${config.isDarkMode ? '#333' : '#eee'};
         display: flex;
         align-items: center;
         gap: 10px;
+        background: ${config.isDarkMode ? '#242424' : 'white'};
+        color: ${config.isDarkMode ? 'white' : 'black'};
+        border-radius: 10px 10px 0 0;
       }
       .chatbot-header img {
         width: 30px;
         height: 30px;
         border-radius: 50%;
+        object-fit: cover;
       }
       .chatbot-messages {
         flex: 1;
         overflow-y: auto;
         padding: 15px;
+        background: ${config.isDarkMode ? '#1a1a1a' : 'white'};
+        color: ${config.isDarkMode ? 'white' : 'black'};
       }
       .chatbot-input {
         padding: 15px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid ${config.isDarkMode ? '#333' : '#eee'};
+        background: ${config.isDarkMode ? '#242424' : 'white'};
       }
       .chatbot-input input {
         width: 100%;
         padding: 10px;
-        border: 1px solid #ddd;
+        border: 1px solid ${config.isDarkMode ? '#444' : '#ddd'};
         border-radius: 5px;
+        background: ${config.isDarkMode ? '#333' : 'white'};
+        color: ${config.isDarkMode ? 'white' : 'black'};
       }
       .message {
         margin-bottom: 10px;
@@ -121,12 +131,13 @@ async function initializeChatbot() {
         border-radius: 5px;
       }
       .message.user {
-        background: ${config.primaryColor};
+        background: ${config.primaryColor || '#000000'};
         color: white;
         margin-left: 20%;
       }
       .message.assistant {
-        background: #f0f0f0;
+        background: ${config.isDarkMode ? '#333' : '#f0f0f0'};
+        color: ${config.isDarkMode ? 'white' : 'black'};
         margin-right: 20%;
       }
     `;
@@ -140,13 +151,16 @@ async function initializeChatbot() {
       <div class="chatbot-widget">
         <div class="chatbot-bubble">
           <div class="chatbot-bubble-message">${config.bubbleMessage || 'Chat with us!'}</div>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+          ${config.logoUrl ? 
+            `<img src="${config.logoUrl}" alt="${config.name}" style="width: 24px; height: 24px; object-fit: contain;">` :
+            `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>`
+          }
         </div>
         <div class="chatbot-container">
           <div class="chatbot-header">
-            ${config.logoUrl ? `<img src="${config.logoUrl}" alt="${config.name}">` : ''}
+            ${config.avatarUrl ? `<img src="${config.avatarUrl}" alt="${config.name}">` : ''}
             <span>${config.name}</span>
           </div>
           <div class="chatbot-messages"></div>
