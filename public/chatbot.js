@@ -58,6 +58,23 @@ async function initializeChatbot() {
         justify-content: center;
         cursor: pointer;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: relative;
+      }
+      .chatbot-bubble-message {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        background: ${config.primaryColor};
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        white-space: nowrap;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+      }
+      .chatbot-bubble:hover .chatbot-bubble-message {
+        display: block;
       }
       .chatbot-container {
         position: fixed;
@@ -122,6 +139,7 @@ async function initializeChatbot() {
     const chatbotHTML = `
       <div class="chatbot-widget">
         <div class="chatbot-bubble">
+          <div class="chatbot-bubble-message">${config.bubbleMessage || 'Chat with us!'}</div>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
