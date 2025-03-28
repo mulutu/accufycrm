@@ -130,7 +130,7 @@ export function ChatbotPreview({
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between border-b p-4"
+            className="flex items-center justify-between border-b p-4 rounded-t-lg"
             style={{ 
               backgroundColor: primaryColor,
               borderColor: isDarkMode ? '#333333' : '#e5e7eb'
@@ -215,25 +215,49 @@ export function ChatbotPreview({
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t mt-auto">
-            <div className="flex space-x-2">
+          <div className="border-t p-4" style={{ borderColor: isDarkMode ? '#333333' : '#e5e7eb' }}>
+            <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 rounded-lg border p-2 focus:outline-none focus:ring-2"
-                style={{ borderColor: primaryColor }}
+                className="flex-1 rounded-lg border p-2 text-sm focus:outline-none focus:ring-2"
+                style={{
+                  backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+                  borderColor: isDarkMode ? '#333333' : '#e5e7eb',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                }}
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg text-white"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-white"
                 style={{ backgroundColor: primaryColor }}
               >
                 Send
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
+
+          {/* Footer */}
+          <div 
+            className="border-t p-3 text-center text-xs"
+            style={{ 
+              borderColor: isDarkMode ? '#333333' : '#e5e7eb',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }}
+          >
+            Powered by{' '}
+            <a 
+              href="https://accufycrm.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="font-medium hover:underline"
+              style={{ color: primaryColor }}
+            >
+              AccufyCRM.com
+            </a>
+          </div>
         </div>
       )}
     </div>
