@@ -69,11 +69,19 @@ model VerificationToken {
 
 model Chatbot {
   id            String         @id @default(cuid())
+  uuid          String?        @unique
   name          String
   description   String?
   logoUrl       String?
   avatarUrl     String?
   websiteUrl    String?
+  primaryColor  String         @default("#000000")
+  bubbleMessage String         @default("Chat with us!")
+  welcomeMessage String        @default("Hello! I'm your AI assistant. How can I help you today?")
+  instructions  String?
+  isDarkMode    Boolean        @default(false)
+  width         Int            @default(400)
+  height        Int            @default(600)
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages      Message[]

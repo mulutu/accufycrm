@@ -39,6 +39,8 @@ export default function CreateChatbotPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState('configure');
+  const [chatbotId, setChatbotId] = useState<string | null>(null);
+  const [chatbotUuid, setChatbotUuid] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: 'MagicBot',
     description: 'A chatbot that can help you with your questions',
@@ -99,12 +101,13 @@ export default function CreateChatbotPage() {
       }
 
       const data = await response.json();
-      const chatbotId = data.id;
+      setChatbotId(data.id); // Store the chatbot ID
+      setChatbotUuid(data.uuid); // Store the chatbot UUID
 
       // Handle website scraping if URL is provided
       if (formData.websiteUrl) {
         try {
-          const scrapeResponse = await fetch(`/api/chatbots/${chatbotId}/scrape`, {
+          const scrapeResponse = await fetch(`/api/chatbots/${data.id}/scrape`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -523,16 +526,22 @@ export default function CreateChatbotPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <EmbedCode
-                      chatbotId="preview"
-                      name={formData.name}
-                      websiteUrl={formData.websiteUrl}
-                      primaryColor={formData.primaryColor}
-                      bubbleMessage={formData.bubbleMessage}
-                      isDarkMode={formData.isDarkMode}
-                      width={formData.width}
-                      height={formData.height}
-                    />
+                    {chatbotId && chatbotUuid ? (
+                      <EmbedCode
+                        chatbotId={chatbotUuid}
+                        name={formData.name}
+                        websiteUrl={formData.websiteUrl}
+                        primaryColor={formData.primaryColor}
+                        bubbleMessage={formData.bubbleMessage}
+                        isDarkMode={formData.isDarkMode}
+                        width={formData.width}
+                        height={formData.height}
+                      />
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-muted-foreground">Please save your chatbot first to get the embed code.</p>
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <Button type="button" variant="outline" onClick={handleBack}>

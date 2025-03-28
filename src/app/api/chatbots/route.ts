@@ -27,6 +27,13 @@ export async function POST(request: Request) {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const websiteUrl = formData.get('websiteUrl') as string;
+    const primaryColor = formData.get('primaryColor') as string;
+    const bubbleMessage = formData.get('bubbleMessage') as string;
+    const welcomeMessage = formData.get('welcomeMessage') as string;
+    const instructions = formData.get('instructions') as string;
+    const isDarkMode = formData.get('isDarkMode') === 'true';
+    const width = parseInt(formData.get('width') as string);
+    const height = parseInt(formData.get('height') as string);
     const logo = formData.get('logo');
     const avatar = formData.get('avatar');
     const documents = formData.getAll('documents');
@@ -66,6 +73,14 @@ export async function POST(request: Request) {
         description,
         logoUrl,
         avatarUrl,
+        websiteUrl,
+        primaryColor,
+        bubbleMessage,
+        welcomeMessage,
+        instructions,
+        isDarkMode,
+        width,
+        height,
         userId: session.user.id,
       },
     });
