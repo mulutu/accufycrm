@@ -103,7 +103,11 @@ export default function ChatbotPage() {
         </Button>
       </div>
 
-      <Tabs value={currentTab} className="space-y-6">
+      <Tabs 
+        value={currentTab} 
+        onValueChange={setCurrentTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="embed">Embed Code</TabsTrigger>
