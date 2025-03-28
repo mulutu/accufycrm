@@ -6,7 +6,7 @@
   }
 
   const config = window.AI_CHAT_CRM_CONFIG;
-  const { chatbotId, name, logoUrl, avatarUrl, theme = 'light' } = config;
+  const { chatbotId, name, logoUrl, avatarUrl, primaryColor = '#000000', theme = 'light', welcomeMessage = 'Hello! How can I help you today?', apiUrl } = config;
 
   // Create widget container
   const container = document.createElement('div');
@@ -22,42 +22,34 @@
   // Create chat button
   const chatButton = document.createElement('button');
   chatButton.style.cssText = `
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: ${theme === 'light' ? '#ffffff' : '#1a1a1a'};
+    padding: 8px 16px;
+    border-radius: 9999px;
+    background-color: ${primaryColor};
+    color: white;
     border: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
     transition: transform 0.2s ease;
   `;
 
-  // Add logo or default icon
-  if (logoUrl) {
-    const img = document.createElement('img');
-    img.src = logoUrl;
-    img.style.cssText = `
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-    `;
-    chatButton.appendChild(img);
-  } else {
-    chatButton.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-      </svg>
-    `;
-  }
+  // Add chat icon and text
+  chatButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    Hi! 👋 Click me to start chatting
+  `;
 
   // Create chat window
   const chatWindow = document.createElement('div');
   chatWindow.style.cssText = `
     position: fixed;
-    bottom: 90px;
+    bottom: 80px;
     right: 20px;
     width: 350px;
     height: 500px;
@@ -67,29 +59,38 @@
     display: none;
     flex-direction: column;
     overflow: hidden;
+    border: 1px solid ${theme === 'light' ? '#e5e7eb' : '#333333'};
   `;
 
   // Create chat header
   const chatHeader = document.createElement('div');
   chatHeader.style.cssText = `
     padding: 16px;
-    background-color: ${theme === 'light' ? '#f5f5f5' : '#2d2d2d'};
+    background-color: ${primaryColor};
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  `;
+
+  // Add logo and title container
+  const headerLeft = document.createElement('div');
+  headerLeft.style.cssText = `
     display: flex;
     align-items: center;
     gap: 12px;
   `;
 
-  // Add avatar
-  if (avatarUrl) {
-    const avatar = document.createElement('img');
-    avatar.src = avatarUrl;
-    avatar.style.cssText = `
+  // Add logo if available
+  if (logoUrl) {
+    const logo = document.createElement('img');
+    logo.src = logoUrl;
+    logo.style.cssText = `
       width: 32px;
       height: 32px;
       border-radius: 50%;
       object-fit: cover;
     `;
-    chatHeader.appendChild(avatar);
+    headerLeft.appendChild(logo);
   }
 
   // Add title
@@ -97,9 +98,24 @@
   title.textContent = name;
   title.style.cssText = `
     font-weight: 600;
-    color: ${theme === 'light' ? '#000000' : '#ffffff'};
+    color: white;
   `;
-  chatHeader.appendChild(title);
+  headerLeft.appendChild(title);
+
+  // Add close button
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '✕';
+  closeButton.style.cssText = `
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+  `;
+
+  chatHeader.appendChild(headerLeft);
+  chatHeader.appendChild(closeButton);
 
   // Create chat messages container
   const messagesContainer = document.createElement('div');
@@ -113,10 +129,10 @@
   `;
 
   // Create input container
-  const inputContainer = document.createElement('div');
+  const inputContainer = document.createElement('form');
   inputContainer.style.cssText = `
     padding: 16px;
-    border-top: 1px solid ${theme === 'light' ? '#e5e5e5' : '#2d2d2d'};
+    border-top: 1px solid ${theme === 'light' ? '#e5e7eb' : '#333333'};
     display: flex;
     gap: 8px;
   `;
@@ -128,14 +144,16 @@
   input.style.cssText = `
     flex: 1;
     padding: 8px 12px;
-    border: 1px solid ${theme === 'light' ? '#e5e5e5' : '#2d2d2d'};
+    border: 1px solid ${theme === 'light' ? '#e5e7eb' : '#333333'};
     border-radius: 6px;
     background-color: ${theme === 'light' ? '#ffffff' : '#1a1a1a'};
     color: ${theme === 'light' ? '#000000' : '#ffffff'};
+    font-size: 14px;
   `;
 
   // Create send button
   const sendButton = document.createElement('button');
+  sendButton.type = 'submit';
   sendButton.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M22 2L11 13"></path>
@@ -146,13 +164,22 @@
     padding: 8px;
     border: none;
     border-radius: 6px;
-    background-color: #0070f3;
+    background-color: ${primaryColor};
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.2s ease;
   `;
+
+  // Add hover effect to send button
+  sendButton.addEventListener('mouseover', () => {
+    sendButton.style.opacity = '0.9';
+  });
+  sendButton.addEventListener('mouseout', () => {
+    sendButton.style.opacity = '1';
+  });
 
   // Assemble chat window
   inputContainer.appendChild(input);
@@ -168,22 +195,45 @@
   // Add container to page
   document.body.appendChild(container);
 
+  // Add welcome message
+  const welcomeMessageDiv = document.createElement('div');
+  welcomeMessageDiv.style.cssText = `
+    align-self: flex-start;
+    background-color: ${theme === 'light' ? '#f3f4f6' : '#2d2d2d'};
+    color: ${theme === 'light' ? '#000000' : '#ffffff'};
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 80%;
+  `;
+  welcomeMessageDiv.textContent = welcomeMessage;
+  messagesContainer.appendChild(welcomeMessageDiv);
+
   // Toggle chat window
   chatButton.addEventListener('click', () => {
     const isVisible = chatWindow.style.display === 'flex';
     chatWindow.style.display = isVisible ? 'none' : 'flex';
-    chatButton.style.transform = isVisible ? 'none' : 'scale(0.9)';
+    chatButton.style.transform = isVisible ? 'none' : 'scale(0.95)';
+  });
+
+  // Close chat window
+  closeButton.addEventListener('click', () => {
+    chatWindow.style.display = 'none';
+    chatButton.style.transform = 'none';
   });
 
   // Handle message sending
-  async function sendMessage(message) {
+  inputContainer.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+
     // Add user message to chat
     const userMessage = document.createElement('div');
     userMessage.style.cssText = `
       align-self: flex-end;
-      background-color: #0070f3;
+      background-color: ${primaryColor};
       color: white;
-      padding: 8px 12px;
+      padding: 12px 16px;
       border-radius: 12px;
       max-width: 80%;
     `;
@@ -195,7 +245,7 @@
 
     try {
       // Send message to API
-      const response = await fetch(`${window.location.origin}/api/chatbots/${chatbotId}/chat`, {
+      const response = await fetch(`${apiUrl}/api/chatbots/${chatbotId}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,48 +258,42 @@
       }
 
       const data = await response.json();
-
-      // Add bot response to chat
+      
+      // Add bot message to chat
       const botMessage = document.createElement('div');
       botMessage.style.cssText = `
         align-self: flex-start;
-        background-color: ${theme === 'light' ? '#f5f5f5' : '#2d2d2d'};
+        background-color: ${theme === 'light' ? '#f3f4f6' : '#2d2d2d'};
         color: ${theme === 'light' ? '#000000' : '#ffffff'};
-        padding: 8px 12px;
+        padding: 12px 16px;
         border-radius: 12px;
         max-width: 80%;
       `;
-      botMessage.textContent = data.response;
+      botMessage.textContent = data.message;
       messagesContainer.appendChild(botMessage);
+
+      // Scroll to bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (error) {
       console.error('Error sending message:', error);
+      // Show error message
       const errorMessage = document.createElement('div');
       errorMessage.style.cssText = `
         align-self: flex-start;
-        background-color: #ff4444;
-        color: white;
-        padding: 8px 12px;
+        background-color: #fee2e2;
+        color: #dc2626;
+        padding: 12px 16px;
         border-radius: 12px;
         max-width: 80%;
       `;
-      errorMessage.textContent = 'Sorry, there was an error processing your message.';
+      errorMessage.textContent = 'Sorry, there was an error sending your message. Please try again.';
       messagesContainer.appendChild(errorMessage);
     }
+  });
 
-    // Scroll to bottom
+  // Scroll to bottom when new messages are added
+  const observer = new MutationObserver(() => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
-
-  // Handle input submission
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && input.value.trim()) {
-      sendMessage(input.value.trim());
-    }
   });
-
-  sendButton.addEventListener('click', () => {
-    if (input.value.trim()) {
-      sendMessage(input.value.trim());
-    }
-  });
+  observer.observe(messagesContainer, { childList: true, subtree: true });
 })(); 

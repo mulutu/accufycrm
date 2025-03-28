@@ -29,13 +29,17 @@ export function EmbedCode({
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  const embedCode = `<script 
-  defer 
-  src="${appUrl}/vendor/chatbot/js/external-chatbot.js" 
-  data-chatbot-uuid="${chatbotId}" 
-  data-iframe-width="${width}" 
-  data-iframe-height="${height}" >
-</script>`;
+  const embedCode = `<script>
+  window.AI_CHAT_CRM_CONFIG = {
+    chatbotId: "${chatbotId}",
+    name: "${name}",
+    primaryColor: "${primaryColor}",
+    bubbleMessage: "${bubbleMessage}",
+    isDarkMode: ${isDarkMode},
+    apiUrl: "${appUrl}"
+  };
+</script>
+<script src="${appUrl}/widget.js"></script>`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(embedCode);
