@@ -20,6 +20,7 @@ export async function POST(
       },
       include: {
         knowledgeBase: true,
+        user: true,
       },
     });
 
@@ -31,6 +32,7 @@ export async function POST(
         },
         include: {
           knowledgeBase: true,
+          user: true,
         },
       });
     }
@@ -48,22 +50,44 @@ export async function POST(
     // Generate a unique session ID
     const sessionId = crypto.randomUUID();
 
-    // Save the conversation without user ID for public access
+    // Save the conversation with the chatbot owner's user ID
     await prisma.conversation.create({
       data: {
         sessionId,
-        chatbotId: chatbot.id,
+        chatbot: {
+          connect: {
+            id: chatbot.id
+          }
+        },
         messages: {
           create: [
             {
               content: message,
               role: 'user',
-              chatbotId: chatbot.id,
+              chatbot: {
+                connect: {
+                  id: chatbot.id
+                }
+              },
+              user: chatbot.user ? {
+                connect: {
+                  id: chatbot.user.id
+                }
+              } : undefined
             },
             {
               content: response.message,
               role: 'assistant',
-              chatbotId: chatbot.id,
+              chatbot: {
+                connect: {
+                  id: chatbot.id
+                }
+              },
+              user: chatbot.user ? {
+                connect: {
+                  id: chatbot.user.id
+                }
+              } : undefined
             },
           ],
         },
