@@ -122,7 +122,7 @@ export async function scrapeWebsite(url: string, chatbotId: string, userId: stri
     console.log('Making request to ScrapingAnt with URL:', url);
     console.log('Request options:', {
       ...options,
-      path: options.path.replace(SCRAPING_ANT_API_KEY, '[REDACTED]')
+      path: options.path?.replace(SCRAPING_ANT_API_KEY, '[REDACTED]')
     });
 
     const req = https.request(options, (res) => {
@@ -155,21 +155,21 @@ export async function scrapeWebsite(url: string, chatbotId: string, userId: stri
           const chunkSize = 1000;
           const textChunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g')) || [];
           
-          // Create documents for each chunk
+          // Create knowledge base entries for each chunk
           await Promise.all(
             textChunks.map((chunk, index) => 
-              prisma.document.create({
+              prisma.knowledgeBase.create({
                 data: {
-                  name: `${url} - Part ${index + 1}`,
                   content: chunk,
+                  source: 'website',
+                  sourceUrl: url,
                   chatbotId,
-                  userId,
                 },
               })
             )
           );
           
-          console.log('Successfully stored scraped content in database');
+          console.log('Successfully stored scraped content in knowledge base');
           resolve();
         } catch (error) {
           console.error('Error processing response:', error);
