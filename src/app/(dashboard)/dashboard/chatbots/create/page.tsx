@@ -57,14 +57,23 @@ export default function CreateChatbotPage() {
 
     try {
       const formDataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          if ((key === 'logo' || key === 'avatar') && value instanceof File) {
-            formDataToSend.append(key, value);
-          } else {
-            formDataToSend.append(key, String(value));
-          }
-        }
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('websiteUrl', formData.websiteUrl);
+      formDataToSend.append('primaryColor', formData.primaryColor);
+      formDataToSend.append('bubbleMessage', formData.bubbleMessage);
+      formDataToSend.append('instructions', formData.instructions);
+      formDataToSend.append('welcomeMessage', formData.welcomeMessage);
+      formDataToSend.append('isDarkMode', formData.isDarkMode.toString());
+
+      if (formData.logo) {
+        formDataToSend.append('logo', formData.logo);
+      }
+      if (formData.avatar) {
+        formDataToSend.append('avatar', formData.avatar);
+      }
+      formData.documents.forEach((doc) => {
+        formDataToSend.append('documents', doc);
       });
 
       const response = await fetch('/api/chatbots', {
@@ -76,17 +85,18 @@ export default function CreateChatbotPage() {
         throw new Error('Failed to create chatbot');
       }
 
-      const data = await response.json();
       toast({
-        title: 'Success',
+        title: 'Success!',
         description: 'Chatbot created successfully',
       });
-      router.push(`/dashboard/chatbots/${data.id}`);
+
+      // Redirect to chatbots list
+      router.push('/dashboard/chatbots');
     } catch (error) {
       console.error('Error creating chatbot:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create chatbot',
+        description: 'Failed to create chatbot. Please try again.',
         variant: 'destructive',
       });
     } finally {
