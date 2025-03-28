@@ -49,96 +49,124 @@ async function initializeChatbot() {
         font-family: system-ui, -apple-system, sans-serif;
       }
       .chatbot-bubble {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
+        padding: 8px 16px;
+        border-radius: 9999px;
         background-color: ${config.primaryColor || '#000000'};
         color: white;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        cursor: pointer;
         display: flex;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        position: relative;
-      }
-      .chatbot-bubble-message {
-        position: absolute;
-        bottom: 70px;
-        right: 0;
-        background: ${config.primaryColor || '#000000'};
-        color: white;
-        padding: 8px 12px;
-        border-radius: 8px;
+        gap: 8px;
         font-size: 14px;
-        white-space: nowrap;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        display: none;
-      }
-      .chatbot-bubble:hover .chatbot-bubble-message {
-        display: block;
+        font-weight: 500;
+        transition: transform 0.2s ease;
       }
       .chatbot-container {
         position: fixed;
-        bottom: 90px;
+        bottom: 80px;
         right: 20px;
         width: ${config.width || 400}px;
         height: ${config.height || 600}px;
         background: ${config.isDarkMode ? '#1a1a1a' : 'white'};
-        border-radius: 10px;
+        border-radius: 12px;
         box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         display: none;
         flex-direction: column;
+        overflow: hidden;
+        border: 1px solid ${config.isDarkMode ? '#333' : '#e5e7eb'};
       }
       .chatbot-header {
-        padding: 15px;
-        border-bottom: 1px solid ${config.isDarkMode ? '#333' : '#eee'};
+        padding: 16px;
+        background-color: ${config.primaryColor || '#000000'};
         display: flex;
         align-items: center;
-        gap: 10px;
-        background: ${config.isDarkMode ? '#242424' : 'white'};
-        color: ${config.isDarkMode ? 'white' : 'black'};
-        border-radius: 10px 10px 0 0;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .chatbot-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
       .chatbot-header img {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         object-fit: cover;
       }
+      .chatbot-header span {
+        font-weight: 600;
+        color: white;
+      }
+      .chatbot-close {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px;
+      }
       .chatbot-messages {
         flex: 1;
+        padding: 16px;
         overflow-y: auto;
-        padding: 15px;
-        background: ${config.isDarkMode ? '#1a1a1a' : 'white'};
-        color: ${config.isDarkMode ? 'white' : 'black'};
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+      }
+      .chatbot-input-container {
+        padding: 16px;
+        border-top: 1px solid ${config.isDarkMode ? '#333' : '#e5e7eb'};
+        margin-top: auto;
+      }
+      .chatbot-input-wrapper {
+        display: flex;
+        gap: 8px;
       }
       .chatbot-input {
-        padding: 15px;
-        border-top: 1px solid ${config.isDarkMode ? '#333' : '#eee'};
-        background: ${config.isDarkMode ? '#242424' : 'white'};
-      }
-      .chatbot-input input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid ${config.isDarkMode ? '#444' : '#ddd'};
-        border-radius: 5px;
-        background: ${config.isDarkMode ? '#333' : 'white'};
+        flex: 1;
+        padding: 8px;
+        border: 1px solid ${config.primaryColor || '#000000'};
+        border-radius: 8px;
+        background-color: ${config.isDarkMode ? '#1a1a1a' : 'white'};
         color: ${config.isDarkMode ? 'white' : 'black'};
+        font-size: 14px;
+        min-width: 0;
+        outline: none;
+      }
+      .chatbot-input:focus {
+        box-shadow: 0 0 0 2px ${config.primaryColor || '#000000'}40;
+      }
+      .chatbot-send {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: ${config.primaryColor || '#000000'};
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: opacity 0.2s ease;
+      }
+      .chatbot-send:hover {
+        opacity: 0.9;
       }
       .message {
-        margin-bottom: 10px;
-        padding: 10px;
-        border-radius: 5px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
       }
       .message.user {
-        background: ${config.primaryColor || '#000000'};
+        align-self: flex-end;
+        background-color: ${config.primaryColor || '#000000'};
         color: white;
-        margin-left: 20%;
       }
       .message.assistant {
-        background: ${config.isDarkMode ? '#333' : '#f0f0f0'};
+        align-self: flex-start;
+        background-color: ${config.isDarkMode ? '#2d2d2d' : '#f3f4f6'};
         color: ${config.isDarkMode ? 'white' : 'black'};
-        margin-right: 20%;
       }
     `;
 
@@ -149,24 +177,27 @@ async function initializeChatbot() {
     // Create and inject the chatbot HTML
     const chatbotHTML = `
       <div class="chatbot-widget">
-        <div class="chatbot-bubble">
-          <div class="chatbot-bubble-message">${config.bubbleMessage || 'Chat with us!'}</div>
-          ${config.logoUrl ? 
-            `<img src="${config.logoUrl}" alt="${config.name}" style="width: 24px; height: 24px; object-fit: contain;">` :
-            `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>`
-          }
-        </div>
+        <button class="chatbot-bubble">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          ${config.bubbleMessage || 'Hi! 👋 Click me to start chatting'}
+        </button>
         <div class="chatbot-container">
           <div class="chatbot-header">
-            ${config.avatarUrl ? `<img src="${config.avatarUrl}" alt="${config.name}">` : ''}
-            <span>${config.name}</span>
+            <div class="chatbot-header-left">
+              ${config.logoUrl ? `<img src="${config.logoUrl}" alt="${config.name}">` : ''}
+              <span>${config.name}</span>
+            </div>
+            <button class="chatbot-close">✕</button>
           </div>
           <div class="chatbot-messages"></div>
-          <div class="chatbot-input">
-            <input type="text" placeholder="Type your message...">
-          </div>
+          <form class="chatbot-input-container">
+            <div class="chatbot-input-wrapper">
+              <input type="text" class="chatbot-input" placeholder="Type your message...">
+              <button type="submit" class="chatbot-send">Send</button>
+            </div>
+          </form>
         </div>
       </div>
     `;
@@ -178,44 +209,51 @@ async function initializeChatbot() {
     // Add event listeners
     const bubble = document.querySelector('.chatbot-bubble');
     const container = document.querySelector('.chatbot-container');
-    const input = document.querySelector('.chatbot-input input');
+    const closeButton = document.querySelector('.chatbot-close');
+    const form = document.querySelector('.chatbot-input-container');
+    const input = document.querySelector('.chatbot-input');
     const messages = document.querySelector('.chatbot-messages');
 
     bubble.addEventListener('click', () => {
       container.style.display = container.style.display === 'none' ? 'flex' : 'none';
       if (container.style.display === 'flex' && messages.children.length === 0) {
-        addMessage(config.welcomeMessage, 'assistant');
+        addMessage(config.welcomeMessage || 'Hello! How can I help you today?', 'assistant');
       }
     });
 
-    input.addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        const message = input.value.trim();
-        addMessage(message, 'user');
-        input.value = '';
+    closeButton.addEventListener('click', () => {
+      container.style.display = 'none';
+      bubble.style.transform = 'none';
+    });
 
-        try {
-          const apiUrl = `${apiDomain}/api/chatbots/${config.uuid}/chat`;
-          console.log('Sending message to:', apiUrl);
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message }),
-          });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
 
-          if (!response.ok) {
-            console.error('Response not OK:', response.status, response.statusText);
-            throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
-          }
+      addMessage(message, 'user');
+      input.value = '';
 
-          const data = await response.json();
-          addMessage(data.message, 'assistant');
-        } catch (error) {
-          console.error('Error sending message:', error);
-          addMessage('Sorry, there was an error processing your message.', 'assistant');
+      try {
+        const apiUrl = `${apiDomain}/api/chatbots/${config.uuid}/chat`;
+        console.log('Sending message to:', apiUrl);
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send message');
         }
+
+        const data = await response.json();
+        addMessage(data.message, 'assistant');
+      } catch (error) {
+        console.error('Error sending message:', error);
+        addMessage('Sorry, there was an error sending your message. Please try again.', 'assistant');
       }
     });
 
@@ -226,6 +264,13 @@ async function initializeChatbot() {
       messages.appendChild(messageDiv);
       messages.scrollTop = messages.scrollHeight;
     }
+
+    // Scroll to bottom when new messages are added
+    const observer = new MutationObserver(() => {
+      messages.scrollTop = messages.scrollHeight;
+    });
+    observer.observe(messages, { childList: true, subtree: true });
+
   } catch (error) {
     console.error('Error initializing chatbot:', error);
   }

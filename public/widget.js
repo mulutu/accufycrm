@@ -70,6 +70,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
   `;
 
   // Add logo and title container
@@ -126,6 +127,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0;
   `;
 
   // Create input container
@@ -133,6 +135,12 @@
   inputContainer.style.cssText = `
     padding: 16px;
     border-top: 1px solid ${theme === 'light' ? '#e5e7eb' : '#333333'};
+    margin-top: auto;
+  `;
+
+  // Create input wrapper div
+  const inputWrapper = document.createElement('div');
+  inputWrapper.style.cssText = `
     display: flex;
     gap: 8px;
   `;
@@ -143,33 +151,36 @@
   input.placeholder = 'Type your message...';
   input.style.cssText = `
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid ${theme === 'light' ? '#e5e7eb' : '#333333'};
-    border-radius: 6px;
+    padding: 8px;
+    border: 1px solid ${primaryColor};
+    border-radius: 8px;
     background-color: ${theme === 'light' ? '#ffffff' : '#1a1a1a'};
     color: ${theme === 'light' ? '#000000' : '#ffffff'};
     font-size: 14px;
+    min-width: 0;
+    outline: none;
   `;
+
+  // Add focus styles to input
+  input.addEventListener('focus', () => {
+    input.style.boxShadow = `0 0 0 2px ${primaryColor}40`;
+  });
+  input.addEventListener('blur', () => {
+    input.style.boxShadow = 'none';
+  });
 
   // Create send button
   const sendButton = document.createElement('button');
   sendButton.type = 'submit';
-  sendButton.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M22 2L11 13"></path>
-      <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
-    </svg>
-  `;
+  sendButton.textContent = 'Send';
   sendButton.style.cssText = `
-    padding: 8px;
+    padding: 8px 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: ${primaryColor};
     color: white;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 14px;
     transition: opacity 0.2s ease;
   `;
 
@@ -181,9 +192,12 @@
     sendButton.style.opacity = '1';
   });
 
+  // Assemble input area
+  inputWrapper.appendChild(input);
+  inputWrapper.appendChild(sendButton);
+  inputContainer.appendChild(inputWrapper);
+
   // Assemble chat window
-  inputContainer.appendChild(input);
-  inputContainer.appendChild(sendButton);
   chatWindow.appendChild(chatHeader);
   chatWindow.appendChild(messagesContainer);
   chatWindow.appendChild(inputContainer);
