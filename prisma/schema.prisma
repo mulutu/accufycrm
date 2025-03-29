@@ -151,10 +151,21 @@ model Document {
   content     String   @db.Text
   chatbotId   String
   chatbot     Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+
+  // Add fields for RAG processing
+  sourceType  String?  // e.g., "url", "file", "text"
+  sourceValue String?  @db.Text // URL, file path/key, or potentially the text itself
+  status      String   @default("pending") // pending, processing, completed, failed
+
+  // Add back user relation fields
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([chatbotId])
+  @@index([userId]) // Also add index for userId
 }
 
 model KnowledgeBase {
